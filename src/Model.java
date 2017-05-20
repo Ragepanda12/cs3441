@@ -43,7 +43,7 @@ public class Model {
       
       this.xLoc = 0;
       this.yLoc = 0;
-      this.direction = UP;
+      this.direction = DOWN;
       
       this.haveKey = false;
       this.haveAxe = false;
