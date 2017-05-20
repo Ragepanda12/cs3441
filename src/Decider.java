@@ -7,6 +7,6 @@ public class Decider {
    }
    
    public char make_decision( char view[][] ) {
-      return 'f';
+      return 'r';
    }
 }
