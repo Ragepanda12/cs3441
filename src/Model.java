@@ -1,5 +1,5 @@
 import java.awt.Point;
-import java.util.Map;
+import java.util.*;
 
 
 public class Model {
@@ -63,6 +63,7 @@ public class Model {
       this.haveDynamite = false;
       this.haveTree = false;
       
+      this.world = new HashMap<>();
       //We might start at the bottom which means that we can go MAXIMUM_Y Upwards...
       //But we might also start at the top which means we can go MAXIMUM_Y Downwards...
       //So we should just have MAXIMUM_Y in both directions. And the same for the x axis.
