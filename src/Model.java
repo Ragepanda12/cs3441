@@ -1,7 +1,6 @@
 import java.awt.Point;
 import java.util.*;
 
-
 public class Model {
    
    
@@ -22,6 +21,7 @@ public class Model {
    final static char DIRECTION_DOWN = 'v';
    final static char DIRECTION_LEFT = '<';
    
+   final static char PLAIN = ' ';
    final static char TREE = 'T';
    final static char DOOR = '-';
    final static char WALL = '*';
@@ -48,7 +48,8 @@ public class Model {
    private boolean haveKey;
    private boolean haveAxe;
    private boolean haveDynamite;
-   private boolean haveTree;
+   private boolean haveRaft;
+   private boolean haveTreasure;
    
    private Map<Point, Character> world;
    
@@ -61,7 +62,8 @@ public class Model {
       this.haveKey = false;
       this.haveAxe = false;
       this.haveDynamite = false;
-      this.haveTree = false;
+      this.haveRaft = false;
+      this.haveTreasure = false;
       
       this.world = new HashMap<>();
       //We might start at the bottom which means that we can go MAXIMUM_Y Upwards...
@@ -75,6 +77,22 @@ public class Model {
       }
       //We start looking downwards. I think?
       this.world.put(new Point(0,0), DIRECTION_DOWN);
+   }
+   
+   public boolean haveAxe() {
+      return haveAxe;
+   }
+   public boolean haveKey() {
+      return haveKey;
+   }
+   public boolean haveRaft() {
+      return haveRaft;
+   }
+   public boolean haveDynamite() {
+      return haveDynamite;
+   }
+   public boolean haveTreasure() {
+      return haveTreasure;
    }
    
    public void update(char view[][]) {
@@ -137,4 +155,133 @@ public class Model {
       }
       return rotatedMap;
    }
+   //Update after the user has input a move...update inventory/change map rep
+   //E.g cut a tree, has raft, or stepped off raft, doesn't have raft anymore.
+   public void updateMove(char move) {
+      
+      switch(move) {
+      //Right turn
+         case 'R':
+            switch (this.direction) {
+               case UP:
+                  direction = RIGHT;
+                  break;
+               case RIGHT:
+                  direction = DOWN;
+                  break;
+               case DOWN:
+                  direction = LEFT;
+                  break;
+               case LEFT:
+                  direction = UP;
+                  break;
+            }
+            break;
+         //Left Turn
+         case 'L':
+            switch (this.direction) {
+               case UP:
+                  direction = LEFT;
+                  break;
+               case RIGHT:
+                  direction = UP;
+                  break;
+               case DOWN:
+                  direction = RIGHT;
+                  break;
+               case LEFT:
+                  direction = DOWN;
+                  break;
+            }
+            break;
+         case 'F':
+           char frontTile = world.get(frontTile(new Point(this.xLoc, this.yLoc)));
+           if((frontTile == WALL) || (frontTile == DOOR) || (frontTile == TREE)) {
+              break;
+           }
+           if(((world.get(new Point(this.xLoc, this.yLoc))) == WATER) && (canMoveOntoTile(frontTile))){
+              this.haveRaft = false;
+           }
+           if (frontTile == AXE) {
+              haveAxe = true;
+           }
+           else if (frontTile == KEY) {
+              haveKey = true;
+           }
+           else if (frontTile == DYNAMITE) {
+              haveDynamite = true;
+           }
+           else if (frontTile == TREASURE) {
+              haveTreasure = true;
+           }
+           switch(this.direction) {
+              case UP:
+                 yLoc += 1;
+                 break;
+              case RIGHT:
+                 xLoc += 1;
+                 break;
+              case DOWN:
+                 yLoc -= 1;
+                 break;
+              case LEFT:
+                 xLoc -= 1;
+                 break;
+           }
+           //For these ones, we'll get the updated 'unlocked' or 'cut' or 'blown up' things in the next view anyway
+         case 'C':
+            break;
+         case 'U':
+            break;
+         case 'B':
+            break;
+      }
+   }
+   public Point frontTile(Point tile) {
+      int x = (int) tile.getX();
+      int y = (int) tile.getY();
+      
+      switch(this.direction) {
+         case UP:
+            y += 1;
+            break;
+         case RIGHT:
+            x += 1;
+            break;
+         case DOWN:
+            y -= 1;
+            break;
+         case LEFT:
+            x -= 1;
+            break;
+      }
+      return new Point(x,y);
+   }
+   public static boolean canMoveOntoTile(char tile) {
+      return((tile == PLAIN) ||
+             (tile == AXE) ||
+             (tile == KEY) ||
+             (tile == DYNAMITE) ||
+             (tile == DIRECTION_UP) ||
+             (tile == DIRECTION_LEFT) ||
+             (tile == DIRECTION_RIGHT) ||
+             (tile == DIRECTION_DOWN)
+            );
+   }
+   public static boolean canPotentiallyMoveOntoTile(char tile, boolean haveAxe, boolean haveKey, boolean haveRaft) {
+      return((tile == PLAIN) ||
+             (tile == AXE) ||
+             (tile == KEY) ||
+             (tile == DYNAMITE) ||
+             (tile == DIRECTION_UP) ||
+             (tile == DIRECTION_LEFT) ||
+             (tile == DIRECTION_RIGHT) ||
+             (tile == DIRECTION_DOWN) ||
+             (tile == TREE && haveAxe) ||
+             (tile == WATER && haveRaft) ||
+             (tile == DOOR && haveKey) /*||
+             (tile == WALL && haveDynamite) still thinking about when to use dynamite*/
+            );
+   }
+
 }
