@@ -13,7 +13,7 @@ public class AStarSearch {
    private Map<Point, Integer> fScore;
    private Map<Point, Integer> gScore;
    private Map<Point, Point> cameFrom;
-   private boolean searchComplete;
+
    public AStarSearch(Map<Point,Character> world, Point start, Point goal) {
       this.world = world;
       this.start = start;
@@ -21,7 +21,6 @@ public class AStarSearch {
       this.fScore = new HashMap<Point, Integer>();
       this.gScore = new HashMap<Point, Integer>();
       this.cameFrom = new HashMap<Point, Point>();
-      this.searchComplete = false;
    }
    private class FComparator implements Comparator<Point>{
       @Override
@@ -50,7 +49,6 @@ public class AStarSearch {
       while(pq.size() != 0) {
          Point currTile = pq.poll();
          if(currTile.equals(goal)) {
-            this.searchComplete = true;
             return;
          }
          visited.add(currTile);
@@ -87,7 +85,6 @@ public class AStarSearch {
             fScore.put(nextTile, tentative_gScore + manhattanDistance(nextTile, this.goal));
          }
       }
-      this.searchComplete = true;
    }
    //Call this after calling aStar to get a linked list containing the path from start to goal
    //Returns empty linked list if there is no path
