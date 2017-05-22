@@ -1,4 +1,4 @@
-# cs3441
+# cs3411
 
 Final project for CS3411 17s1.
 AI that navigates around a 2d world picking up tools (Axe, Key, Dynamite, Raft)
