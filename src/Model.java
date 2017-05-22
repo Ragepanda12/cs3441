@@ -45,13 +45,22 @@ public class Model {
    private int yLoc;
    private int direction;
    
+   private boolean treasureVisible;
+   
    private boolean haveKey;
    private boolean haveAxe;
-   private boolean haveDynamite;
    private boolean haveRaft;
    private boolean haveTreasure;
+   private int numDynamites;
+   
    
    private Map<Point, Character> world;
+   
+   private Point treasureLoc;
+   private Set<Point> axes;
+   private Set<Point> dynamites;
+   private Set<Point> keys;
+   private Set<Point> trees;
    
    public Model() {
       
@@ -59,13 +68,20 @@ public class Model {
       this.yLoc = 0;
       this.direction = DOWN;
       
+      this.treasureVisible = false;
+      
       this.haveKey = false;
       this.haveAxe = false;
-      this.haveDynamite = false;
       this.haveRaft = false;
       this.haveTreasure = false;
+      this.numDynamites = 0;  
       
       this.world = new HashMap<>();
+      
+      this.axes = new HashSet<Point>();
+      this.dynamites = new HashSet<Point>();
+      this.keys = new HashSet<Point>();
+      this.trees = new HashSet<Point>();
       //We might start at the bottom which means that we can go MAXIMUM_Y Upwards...
       //But we might also start at the top which means we can go MAXIMUM_Y Downwards...
       //So we should just have MAXIMUM_Y in both directions. And the same for the x axis.
@@ -88,13 +104,36 @@ public class Model {
    public boolean haveRaft() {
       return haveRaft;
    }
-   public boolean haveDynamite() {
-      return haveDynamite;
+   public int numDynamites() {
+      return numDynamites;
    }
    public boolean haveTreasure() {
       return haveTreasure;
    }
-   
+   public Map<Point, Character> getWorld() {
+      return world;
+   }
+   public Point getLoc() {
+      return new Point(xLoc, yLoc);
+   }
+   public Point getTreasureLoc() {
+      return this.treasureLoc;
+   }
+   public Set<Point> getAxeLocs(){
+      return this.axes;
+   }
+   public Set<Point> getKeyLocs(){
+      return this.keys;
+   }
+   public Set<Point> getTreeLocs(){
+      return this.trees;
+   }
+   public Set<Point> getDynamiteLocs(){
+      return this.dynamites;
+   }
+   public boolean treasureVisible() {
+      return this.treasureVisible;
+   }
    public void update(char view[][]) {
       //We need to rotate the view we're given so that it's the same orientation as our original map.
       int rotationsRequired = 0;
@@ -139,6 +178,27 @@ public class Model {
                }
             }
             Point tile = new Point(currX, currY);
+            
+            switch(currTile) {
+               case AXE:
+                  this.axes.add(tile);
+                  break;
+               case DYNAMITE:
+                  this.dynamites.add(tile);
+                  break;
+               case TREASURE:
+                  this.treasureVisible = true;
+                  this.treasureLoc = tile;
+                  break;
+               case KEY:
+                  this.keys.add(tile);
+                  break;
+               case TREE:
+                  this.trees.add(tile);
+                  break;
+            }
+            
+            
             world.put(tile, currTile);
          }
       }
@@ -209,7 +269,7 @@ public class Model {
               haveKey = true;
            }
            else if (frontTile == DYNAMITE) {
-              haveDynamite = true;
+              numDynamites += 1;
            }
            else if (frontTile == TREASURE) {
               haveTreasure = true;
@@ -234,6 +294,7 @@ public class Model {
          case 'U':
             break;
          case 'B':
+            numDynamites -= 1;
             break;
       }
    }

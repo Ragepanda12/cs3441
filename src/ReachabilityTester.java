@@ -1,5 +1,8 @@
 import java.awt.Point;
 import java.util.*;
+
+//Lol just realised we don't need this if we just add reachability tests to the AStarSearch class.
+
 public class ReachabilityTester {
    
    private Point start;
@@ -10,10 +13,14 @@ public class ReachabilityTester {
       this.goal = goal;
       this.world = world;
    }
-   //do a bfs, if the queue empties then no path is seen
+   //Do an a* search, if the returned path is empty then no path is seen.
    public boolean reachable(boolean haveAxe, boolean haveKey, boolean haveRaft) {
       boolean reachable = false;
-      Queue<Point> queue = new LinkedList<Point> ();
+      //AStarSearch a = new AStarSearch(world, start, goal)
+      return reachable;
+      /*
+       *    //do a bfs, if the queue empties then no path is seen
+       * Queue<Point> queue = new LinkedList<Point> ();
       
       while(queue.size() != 0) {
          Point currTile = queue.poll();
@@ -43,7 +50,7 @@ public class ReachabilityTester {
                queue.add(nextPoint);               
             }
          }
-      }
-      return reachable;
+      }*/
+
    }
 }

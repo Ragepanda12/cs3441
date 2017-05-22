@@ -98,6 +98,10 @@ public class AStarSearch {
       return path;
    }
    
+   public boolean reachable() {
+      return (cameFrom.get(goal) != null);
+   }
+   
    private int manhattanDistance(Point start, Point goal) {
       return Math.abs((int)start.getX() - (int)goal.getX()) + Math.abs((int)start.getY() - (int)goal.getY());
    }
