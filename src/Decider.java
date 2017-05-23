@@ -18,53 +18,136 @@ public class Decider {
          //Priority 1: Have Gold, go back to base position (0,0)
          //But we might not be able to be cause we don't have a raft anymore
          if(model.haveTreasure()) {
-            if(pathTo(model.getLoc(), new Point(0,0))) {
+            if(createPathTo(model.getLoc(), new Point(0,0))) {
                break;
-            }
-            else {
-               //do something when we can't actually path back to the start
             }
          }
          //Priority 2: Can see gold, go to pick it up
          //I suppose theoretically if we need to use a raft to get there then there must be a tree there
-         else if(this.model.treasureVisible()) {
-            if(pathTo(model.getLoc(), model.getTreasureLoc())) {
+         if(this.model.treasureVisible()) {
+            if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
                break;
             }
-            else {
-               //do something when we can't actually path to the gold like get more tools
+         }
+         //Priority 2.5: Unlock doors
+         
+         //Priority 3: Pick up any tools we can see
+         if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty()))) {
+            if(createPathTo(model.getLoc(), model.getAxeLocs().poll())) {
+               break;
             }
          }
-         //Priority 3: Pick up any tools we can see
-         else if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty()))) {
-            
+         if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty()))) {
+            if(createPathTo(model.getLoc(), model.getKeyLocs().poll())) {
+               break;
+            }
          }
-         else if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty()))) {
-            
+         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
+            if(createPathTo(model.getLoc(), model.getTreeLocs().poll())) {
+               moveQueue.add(Model.CHOP_TREE);
+               break;
+            }
          }
-         else if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
-            
-         }
-         else if(!model.getDynamiteLocs().isEmpty()) {
-            
+         if(!model.getDynamiteLocs().isEmpty()) {
+            if(createPathTo(model.getLoc(), model.getDynamiteLocs().poll())) {
+               break;
+            }
          }
          //Priority 4: Explore any unexplored locations
          //Priority 5: Blow up something with dynamite to open a new path
       }
-      this.model.updateMove(move); 
+      move = moveQueue.poll();
+      this.model.updateMove(move);
+      System.out.println(move);
       return move;
    }
-   private boolean pathTo(Point from, Point to) {
+   private boolean createPathTo(Point from, Point to) {
       AStarSearch a = new AStarSearch(model.getWorld(), from, to);
       a.aStar(model.haveAxe(), model.haveKey(), model.haveRaft());
       boolean success = false;
       if(a.reachable()) {
          LinkedList<Point> path = a.reconstructPath();
-         for(Point step : path) {
-            this.moveQueue.add(model.getWorld().get(step));
+         path.addFirst(from);
+         int currDirection = model.getDirection();
+         while(path.size() > 1) {
+            Point curr = path.poll();
+            int nextDirection = whatDirection(curr, path.peek());
+            this.moveQueue.addAll(getTurnMoves(currDirection, nextDirection));
+            currDirection = nextDirection;
+            if(model.getWorld().get(curr) == Model.TREE){
+               this.moveQueue.add(Model.UNLOCK_DOOR);
+            }
+            else if(model.getWorld().get(curr) == Model.DOOR) {
+               this.moveQueue.add(Model.CHOP_TREE);
+            }
+            this.moveQueue.add(Model.MOVE_FORWARD);
          }
          success = true;
       }
       return success;
+   }
+   private LinkedList<Character> getTurnMoves(int currDirection, int nextDirection){
+      LinkedList<Character> turns = new LinkedList<Character>();
+      if(currDirection == nextDirection) {
+         return turns;
+      }
+      int leftTurns = 0;
+      int rightTurns = 0;
+      //Up = 0, Right = 1, Down = 2, Left = 3.
+      //Addition = clockwise rotation, Subtraction = anti-clockwise rotation
+      
+      //
+      if(nextDirection > currDirection) {
+         //If we need to turn clockwise 3 times, just turn counter-clockwise once
+         if(nextDirection - currDirection == 3) {
+            leftTurns = 1;
+         }
+         //Otherwise just turn clockwise 1 or 2 as required
+         else {
+            rightTurns = nextDirection - currDirection;
+         }
+      }
+      else {
+         if(currDirection - nextDirection == 3) {
+            rightTurns = 1;
+         }
+         else {
+            leftTurns = currDirection - nextDirection;
+         }
+      }
+      if(leftTurns == 0) {
+         for(int i = 0; i < rightTurns; i++) {
+            turns.add(Model.TURN_RIGHT);
+         }
+      }
+      else {
+         for(int i = 0; i < leftTurns; i++) {
+            turns.add(Model.TURN_LEFT);
+         }
+      }
+      return turns;
+   }
+   
+   private int whatDirection(Point curr, Point next) {
+      int x = (int) (next.getX() - curr.getX());
+      int y = (int) (next.getY() - curr.getY());
+      int direction = 0;
+      if(x != 0) {
+         if(x > 0) {
+            direction = Model.RIGHT;
+         }
+         else {
+            direction = Model.LEFT;
+         }
+      }
+      else {
+         if(y > 0) {
+            direction = Model.UP;
+         }
+         else {
+            direction = Model.DOWN;
+         }
+      }
+      return direction;
    }
 }

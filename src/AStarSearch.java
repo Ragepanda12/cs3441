@@ -83,6 +83,9 @@ public class AStarSearch {
             cameFrom.put(nextTile, currTile);
             gScore.put(nextTile, tentative_gScore);
             fScore.put(nextTile, tentative_gScore + manhattanDistance(nextTile, this.goal));
+            if(!pq.contains(nextTile)) {
+               pq.add(nextTile);
+            }
          }
       }
    }
@@ -92,7 +95,7 @@ public class AStarSearch {
       LinkedList<Point> path = new LinkedList<Point>();
       Point curr = goal;
       while(cameFrom.get(curr) != null) {
-         path.add(curr);
+         path.addFirst(curr);
          curr = cameFrom.get(curr);
       }
       return path;

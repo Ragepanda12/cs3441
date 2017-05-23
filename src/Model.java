@@ -57,10 +57,10 @@ public class Model {
    private Map<Point, Character> world;
    
    private Point treasureLoc;
-   private Set<Point> axes;
-   private Set<Point> dynamites;
-   private Set<Point> keys;
-   private Set<Point> trees;
+   private LinkedList<Point> axes;
+   private LinkedList<Point> dynamites;
+   private LinkedList<Point> keys;
+   private LinkedList<Point> trees;
    
    public Model() {
       
@@ -78,10 +78,10 @@ public class Model {
       
       this.world = new HashMap<>();
       
-      this.axes = new HashSet<Point>();
-      this.dynamites = new HashSet<Point>();
-      this.keys = new HashSet<Point>();
-      this.trees = new HashSet<Point>();
+      this.axes = new LinkedList<Point>();
+      this.dynamites = new LinkedList<Point>();
+      this.keys = new LinkedList<Point>();
+      this.trees = new LinkedList<Point>();
       //We might start at the bottom which means that we can go MAXIMUM_Y Upwards...
       //But we might also start at the top which means we can go MAXIMUM_Y Downwards...
       //So we should just have MAXIMUM_Y in both directions. And the same for the x axis.
@@ -116,19 +116,22 @@ public class Model {
    public Point getLoc() {
       return new Point(xLoc, yLoc);
    }
+   public int getDirection() {
+      return this.direction;
+   }
    public Point getTreasureLoc() {
       return this.treasureLoc;
    }
-   public Set<Point> getAxeLocs(){
+   public LinkedList<Point> getAxeLocs(){
       return this.axes;
    }
-   public Set<Point> getKeyLocs(){
+   public LinkedList<Point> getKeyLocs(){
       return this.keys;
    }
-   public Set<Point> getTreeLocs(){
+   public LinkedList<Point> getTreeLocs(){
       return this.trees;
    }
-   public Set<Point> getDynamiteLocs(){
+   public LinkedList<Point> getDynamiteLocs(){
       return this.dynamites;
    }
    public boolean treasureVisible() {
@@ -139,18 +142,18 @@ public class Model {
       int rotationsRequired = 0;
       
       switch(this.direction) {
-         //We start facing down (or at least that's the way it goes on the openlearning example and given test)
-         case DOWN:
-            break;
-         case LEFT:
-            rotationsRequired = 1;
-            break;
          case UP:
-            rotationsRequired = 2;
             break;
          case RIGHT:
+            rotationsRequired = 1;
+            break;
+         case DOWN:
+            rotationsRequired = 2;
+            break;
+         case LEFT:
             rotationsRequired = 3;
             break;
+
       }
       for(int i = 0; i < rotationsRequired; i++) {
          view = rotateMap(view);
@@ -159,7 +162,7 @@ public class Model {
          for(int j = 0; j < WINDOW_SIZE; j++) {
             char currTile = view[i][j];
             int currX = xLoc + (j-2);
-            int currY = yLoc + (2+i);
+            int currY = yLoc + (2-i);
             
             if(i == 2 && j == 2) {
                switch(direction) {
@@ -181,36 +184,43 @@ public class Model {
             
             switch(currTile) {
                case AXE:
-                  this.axes.add(tile);
+                  if(!this.axes.contains(tile)) {
+                     this.axes.add(tile);
+                  }
                   break;
                case DYNAMITE:
-                  this.dynamites.add(tile);
+                  if(!this.dynamites.contains(tile)) {
+                     this.dynamites.add(tile);
+                  }
                   break;
                case TREASURE:
                   this.treasureVisible = true;
                   this.treasureLoc = tile;
                   break;
                case KEY:
-                  this.keys.add(tile);
+                  if(!this.keys.contains(tile)) {
+                     this.keys.add(tile);
+                  }
                   break;
                case TREE:
-                  this.trees.add(tile);
+                  if(!this.trees.contains(tile)) {
+                     this.trees.add(tile);
+                  }
                   break;
             }
-            
-            
-            world.put(tile, currTile);
+            this.world.put(tile, currTile);
          }
       }
+      showMap();
    }
    
    private static char[][] rotateMap(char[][] map){
-      int length = map.length;
-      int height = map[0].length;
-      char[][] rotatedMap = new char[height][length];
-      for(int l = 0; l < length; l++) {
-         for(int h = 0; h < height; h++) {
-            rotatedMap[h][length - l - 1] = map[l][h];
+      int x = map.length;
+      int y = map[0].length;
+      char[][] rotatedMap = new char[y][x];
+      for(int l = 0; l < x; l++) {
+         for(int h = 0; h < y; h++) {
+            rotatedMap[h][x - 1 - l] = map[l][h];
          }
       }
       return rotatedMap;
@@ -344,5 +354,15 @@ public class Model {
              (tile == WALL && haveDynamite) still thinking about when to use dynamite*/
             );
    }
-
+   public void showMap() {
+      System.out.println(xLoc);
+      System.out.println(yLoc);
+      for(int y = 12; y >= -12; y--) {
+         for(int x = -12; x <= 12; x++) {
+            char tile = world.get(new Point(x,y));
+            System.out.print(tile);
+         }
+         System.out.println();
+      }
+   }
 }
