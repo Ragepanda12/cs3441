@@ -67,9 +67,7 @@ public class Decider {
          //Go to the nearest ?
          //If null is returned then there is no new info we can find
          Point toExplore = model.nearestReachableRevealingTile(model.getLoc());
-         System.out.println("Before exploring");
          if(toExplore != null){
-            System.out.println("Exploring...");
             if(createPathTo(model.getLoc(),toExplore)) {
                break;
             }
