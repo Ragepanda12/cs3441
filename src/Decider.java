@@ -30,7 +30,11 @@ public class Decider {
             }
          }
          //Priority 2.5: Unlock doors
-         
+         if((model.haveKey()) && (!model.getDoorLocs().isEmpty())) {
+            if(createPathTo(model.getLoc(), model.getDoorLocs().poll())) {
+               break;
+            }
+         }
          //Priority 3: Pick up any tools we can see
          if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty()))) {
             if(createPathTo(model.getLoc(), model.getAxeLocs().poll())) {
@@ -42,6 +46,7 @@ public class Decider {
                break;
             }
          }
+         //This one should probably be lower priority because we might have to cut a tree to move forward into an area
          if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
             if(createPathTo(model.getLoc(), model.getTreeLocs().poll())) {
                moveQueue.add(Model.CHOP_TREE);
@@ -54,13 +59,23 @@ public class Decider {
             }
          }
          //Priority 4: Explore any unexplored locations
-         //Priority 5: Blow up something with dynamite to open a new path
+         //Go to the nearest ?
+         //If null is returned then there is no new info we can find
+         Point toExplore = model.nearestReachableRevealingTile(model.getLoc());
+         if(toExplore != null){
+            if(createPathTo(model.getLoc(),toExplore)) {
+               break;
+            }
+         }
+         //Priority 5: Blow up something with dynamite to open    a new path
       }
       move = moveQueue.poll();
       this.model.updateMove(move);
       System.out.println(move);
       return move;
    }
+
+   
    private boolean createPathTo(Point from, Point to) {
       AStarSearch a = new AStarSearch(model.getWorld(), from, to);
       a.aStar(model.haveAxe(), model.haveKey(), model.haveRaft());
@@ -74,10 +89,10 @@ public class Decider {
             int nextDirection = whatDirection(curr, path.peek());
             this.moveQueue.addAll(getTurnMoves(currDirection, nextDirection));
             currDirection = nextDirection;
-            if(model.getWorld().get(curr) == Model.TREE){
+            if(model.getWorld().get(path.peek()) == Model.DOOR){
                this.moveQueue.add(Model.UNLOCK_DOOR);
             }
-            else if(model.getWorld().get(curr) == Model.DOOR) {
+            else if(model.getWorld().get(path.peek()) == Model.TREE) {
                this.moveQueue.add(Model.CHOP_TREE);
             }
             this.moveQueue.add(Model.MOVE_FORWARD);

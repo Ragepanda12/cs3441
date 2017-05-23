@@ -62,6 +62,8 @@ public class Model {
    private LinkedList<Point> keys;
    private LinkedList<Point> trees;
    
+   private LinkedList<Point> doors;
+   
    public Model() {
       
       this.xLoc = 0;
@@ -82,6 +84,8 @@ public class Model {
       this.dynamites = new LinkedList<Point>();
       this.keys = new LinkedList<Point>();
       this.trees = new LinkedList<Point>();
+      
+      this.doors = new LinkedList<Point>();
       //We might start at the bottom which means that we can go MAXIMUM_Y Upwards...
       //But we might also start at the top which means we can go MAXIMUM_Y Downwards...
       //So we should just have MAXIMUM_Y in both directions. And the same for the x axis.
@@ -134,9 +138,15 @@ public class Model {
    public LinkedList<Point> getDynamiteLocs(){
       return this.dynamites;
    }
+   
+   public LinkedList<Point> getDoorLocs(){
+      return this.doors;
+   }
+
    public boolean treasureVisible() {
       return this.treasureVisible;
    }
+   
    public void update(char view[][]) {
       //We need to rotate the view we're given so that it's the same orientation as our original map.
       int rotationsRequired = 0;
@@ -207,11 +217,16 @@ public class Model {
                      this.trees.add(tile);
                   }
                   break;
+               case DOOR:
+                  if(!this.doors.contains(tile)) {
+                     this.doors.add(tile);
+                  }
+                  break;
             }
             this.world.put(tile, currTile);
          }
       }
-      showMap();
+      //showMap();
    }
    
    private static char[][] rotateMap(char[][] map){
@@ -302,6 +317,7 @@ public class Model {
          case 'C':
             break;
          case 'U':
+            this.doors.remove(frontTile(new Point(xLoc, yLoc)));
             break;
          case 'B':
             numDynamites -= 1;
@@ -354,6 +370,47 @@ public class Model {
              (tile == WALL && haveDynamite) still thinking about when to use dynamite*/
             );
    }
+   //Returns the nearest reachable point that can reveal any ?. Returns (0,0) (which is always known) if there are no ?'s
+   public Point nearestReachableRevealingTile(Point curr) {
+      //Search outwards in squares
+      int x = (int) curr.getX();
+      int y = (int) curr.getY();
+      for(int i = 1; i < MAXIMUM_X/2; i++) {
+         for(int x1 = -i; x1 < i; x1++) {
+            for(int y1 = -i; y1 < i; y1++) {
+               Point currPoint = new Point(x+x1, y+y1);
+               if(world.containsKey(currPoint)) {
+                  if(canSeeUnknowns(currPoint)) {
+                     AStarSearch a = new AStarSearch(this.world, curr, currPoint);
+                     a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+                     if(a.reachable()) {
+                        return currPoint;
+                     }
+                  }
+               }
+            }
+         }
+      }
+      return null;
+   }   
+   
+   private boolean canSeeUnknowns(Point curr) {
+      boolean canSee = false;
+      for(int i = -2; i <= 2; i++) {
+         for(int j = -2; j <= 2; j++) {
+            if(world.get(new Point((int)(curr.getX()+i), (int)(curr.getY()+j))) == UNEXPLORED) {
+               canSee = true;
+               break;
+            }
+         }
+         if(canSee == true) {
+            break;
+         }
+      }
+      
+      return canSee;
+   }
+   
    public void showMap() {
       System.out.println(xLoc);
       System.out.println(yLoc);
