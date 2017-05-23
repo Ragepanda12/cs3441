@@ -31,30 +31,35 @@ public class Decider {
          }
          //Priority 2.5: Unlock doors
          if((model.haveKey()) && (!model.getDoorLocs().isEmpty())) {
-            if(createPathTo(model.getLoc(), model.getDoorLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getDoorLocs().peek())) {
+               model.getDoorLocs().poll();
                break;
             }
          }
          //Priority 3: Pick up any tools we can see
          if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty()))) {
-            if(createPathTo(model.getLoc(), model.getAxeLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getAxeLocs().peek())) {
+               model.getAxeLocs().poll();
                break;
             }
          }
          if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty()))) {
-            if(createPathTo(model.getLoc(), model.getKeyLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getKeyLocs().peek())) {
+               model.getKeyLocs().poll();
                break;
             }
          }
          //This one should probably be lower priority because we might have to cut a tree to move forward into an area
          if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
-            if(createPathTo(model.getLoc(), model.getTreeLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
+               model.getTreeLocs().poll();
                moveQueue.add(Model.CHOP_TREE);
                break;
             }
          }
          if(!model.getDynamiteLocs().isEmpty()) {
-            if(createPathTo(model.getLoc(), model.getDynamiteLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getDynamiteLocs().peek())) {
+               model.getDynamiteLocs().poll();
                break;
             }
          }
