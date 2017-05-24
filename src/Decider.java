@@ -31,30 +31,28 @@ public class Decider {
          }
          //Priority 2.5: Unlock doors
          if((model.haveKey()) && (!model.getDoorLocs().isEmpty())) {
-            if(createPathTo(model.getLoc(), model.getDoorLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getDoorLocs().peek())) {
+               model.getDoorLocs().poll();
                break;
             }
          }
          //Priority 3: Pick up any tools we can see
          if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty()))) {
-            if(createPathTo(model.getLoc(), model.getAxeLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getAxeLocs().peek())) {
+            	model.getAxeLocs().poll();
                break;
             }
          }
          if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty()))) {
-            if(createPathTo(model.getLoc(), model.getKeyLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getKeyLocs().peek())) {
+               model.getKeyLocs().poll();
                break;
             }
          }
-         //This one should probably be lower priority because we might have to cut a tree to move forward into an area
-         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
-            if(createPathTo(model.getLoc(), model.getTreeLocs().poll())) {
-               moveQueue.add(Model.CHOP_TREE);
-               break;
-            }
-         }
+         
          if(!model.getDynamiteLocs().isEmpty()) {
-            if(createPathTo(model.getLoc(), model.getDynamiteLocs().poll())) {
+            if(createPathTo(model.getLoc(), model.getDynamiteLocs().peek())) {
+               model.getDynamiteLocs().poll();
                break;
             }
          }
@@ -62,14 +60,26 @@ public class Decider {
          //Go to the nearest ?
          //If null is returned then there is no new info we can find
          Point toExplore = model.nearestReachableRevealingTile(model.getLoc());
-         System.out.println("Before exploring");
          if(toExplore != null){
-            System.out.println("Exploring...");
             if(createPathTo(model.getLoc(),toExplore)) {
+           	   break;
+            } 
+         }
+         
+         //This one should probably be lower priority because we might have to cut a tree to move forward into an area
+         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
+            if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
+            	System.out.println("Found Tree");
+               model.getTreeLocs().poll();
+               moveQueue.add(Model.CHOP_TREE);
                break;
             }
          }
          //Priority 5: Blow up something with dynamite to open    a new path
+         if(model.numDynamites() > 0 && model.frontTileIsWall(model.getLoc())){
+            //System.out.println("Front is a wall");
+            moveQueue.add(Model.USE_DYNAMITE);
+         }
       }
       move = moveQueue.poll();
       this.model.updateMove(move);

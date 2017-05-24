@@ -320,6 +320,7 @@ public class Model {
             this.doors.remove(frontTile(new Point(xLoc, yLoc)));
             break;
          case 'B':
+            frontTile = PLAIN;
             numDynamites -= 1;
             break;
       }
@@ -393,6 +394,14 @@ public class Model {
       }
       return null;
    }   
+   //Returns whether the front tile is a wall
+   public boolean frontTileIsWall(Point curr) {
+	   char frontTile = world.get(frontTile(curr));
+	   if(frontTile == WALL){
+		   return true;
+	   }
+	   return false;
+   }
    
    private boolean canSeeUnknowns(Point curr) {
       boolean canSee = false;
