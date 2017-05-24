@@ -73,6 +73,9 @@ public class Decider {
             }
          }
          //Priority 5: Blow up something with dynamite to open    a new path
+         if(model.numDynamites() > 0 && model.frontTileIsWall(model.getLoc())){
+            moveQueue.add(Model.USE_DYNAMITE);
+         }
       }
       move = moveQueue.poll();
       this.model.updateMove(move);
