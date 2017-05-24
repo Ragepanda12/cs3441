@@ -349,6 +349,7 @@ public class Model {
              (tile == AXE) ||
              (tile == KEY) ||
              (tile == DYNAMITE) ||
+             (tile == TREASURE) ||
              (tile == DIRECTION_UP) ||
              (tile == DIRECTION_LEFT) ||
              (tile == DIRECTION_RIGHT) ||
@@ -360,6 +361,7 @@ public class Model {
              (tile == AXE) ||
              (tile == KEY) ||
              (tile == DYNAMITE) ||
+             (tile == TREASURE) ||
              (tile == DIRECTION_UP) ||
              (tile == DIRECTION_LEFT) ||
              (tile == DIRECTION_RIGHT) ||
@@ -385,6 +387,31 @@ public class Model {
                      a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
                      if(a.reachable()) {
                         return currPoint;
+                     }
+                  }
+               }
+            }
+         }
+      }
+      return null;
+   }   
+   //Same as above but usage for when we are on water and don't want to step off water until exhaustively searched
+   public Point nearestReachableRevealingWaterTile(Point curr) {
+      //Search outwards in squares
+      int x = (int) curr.getX();
+      int y = (int) curr.getY();
+      for(int i = 1; i < MAXIMUM_X/2; i++) {
+         for(int x1 = -i; x1 < i; x1++) {
+            for(int y1 = -i; y1 < i; y1++) {
+               Point currPoint = new Point(x+x1, y+y1);
+               if(world.containsKey(currPoint)) {
+                  if(world.get(currPoint) == WATER) {
+                     if(canSeeUnknowns(currPoint)) {
+                        AStarSearch a = new AStarSearch(this.world, curr, currPoint);
+                        a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+                        if(a.reachable()) {
+                           return currPoint;
+                        }
                      }
                   }
                }

@@ -22,10 +22,22 @@ public class Decider {
                break;
             }
          }
+         //If we are on water and aren't going back to the start with the gold, we should exhaustively search water before
+         //Trying to make a move to anything else to reveal all information
+         //Since rafts are limited resource
+         if(model.getWorld().get(model.getLoc()) == Model.WATER) {
+            Point toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
+            if(toExplore != null){
+               if(createPathTo(model.getLoc(),toExplore)) {
+                  break;
+               }
+            }            
+         }
          //Priority 2: Can see gold, go to pick it up
          //I suppose theoretically if we need to use a raft to get there then there must be a tree there
          if(this.model.treasureVisible()) {
             if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
+               System.out.println("HI");
                break;
             }
          }
