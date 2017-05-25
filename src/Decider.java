@@ -4,6 +4,7 @@ import java.util.*;
 public class Decider {
    private Queue<Character> moveQueue;
    private Model model;
+
    
    public Decider() {
       this.moveQueue = new LinkedList<Character>();
@@ -82,6 +83,15 @@ public class Decider {
          if(toExplore != null){
             if(createPathTo(model.getLoc(),toExplore)) {
                break;
+            }
+         }
+         //Priority 4.5 go onto water
+         if(model.haveRaft()) {
+            toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
+            if(toExplore != null) {
+               if(createPathTo(model.getLoc(), toExplore)) {
+                  break;
+               }
             }
          }
          //Priority 5: Blow up something with dynamite to open    a new path

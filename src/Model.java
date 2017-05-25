@@ -243,7 +243,7 @@ public class Model {
    //Update after the user has input a move...update inventory/change map rep
    //E.g cut a tree, has raft, or stepped off raft, doesn't have raft anymore.
    public void updateMove(char move) {
-      
+      Point currTile = new Point(this.xLoc, this.yLoc);
       switch(move) {
       //Right turn
          case 'R':
@@ -280,11 +280,11 @@ public class Model {
             }
             break;
          case 'F':
-           char frontTile = world.get(frontTile(new Point(this.xLoc, this.yLoc)));
+           char frontTile = world.get(frontTile(currTile));
            if((frontTile == WALL) || (frontTile == DOOR) || (frontTile == TREE)) {
               break;
            }
-           if(((world.get(new Point(this.xLoc, this.yLoc))) == WATER) && (canMoveOntoTile(frontTile))){
+           if(((world.get(currTile)) == WATER) && (canMoveOntoTile(frontTile))){
               this.haveRaft = false;
            }
            if (frontTile == AXE) {
@@ -313,17 +313,18 @@ public class Model {
                  xLoc -= 1;
                  break;
            }
-           //For these ones, we'll get the updated 'unlocked' or 'cut' or 'blown up' things in the next view anyway
          case 'C':
+            this.trees.remove(frontTile(currTile));
             break;
          case 'U':
-            this.doors.remove(frontTile(new Point(xLoc, yLoc)));
+            this.doors.remove(frontTile(currTile));
             break;
          case 'B':
             numDynamites -= 1;
             break;
       }
    }
+   //Get the tile in front of us
    public Point frontTile(Point tile) {
       int x = (int) tile.getX();
       int y = (int) tile.getY();
