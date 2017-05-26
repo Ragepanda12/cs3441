@@ -78,6 +78,7 @@ public class Decider {
          //If null is returned then there is no new info we can find
          Point toExplore = model.nearestReachableRevealingTile(model.getLoc());
          if(toExplore != null){
+
             if(createPathTo(model.getLoc(),toExplore)) {
                break;
             }
@@ -92,13 +93,14 @@ public class Decider {
             }
          }
          //This one should probably be lower priority because we might have to cut a tree to move forward into an area
-         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
+         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty() && (model.haveAxe())))) {
             if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
                model.getTreeLocs().poll();
                moveQueue.add(Model.CHOP_TREE);
                break;
             }
          }
+
          //Priority 5: Blow up something with dynamite to open    a new path
          if(model.numDynamites() > 0 && model.frontTileIsWall(model.getLoc())){
             moveQueue.add(Model.USE_DYNAMITE);

@@ -53,7 +53,7 @@ public class Model {
    private boolean haveTreasure;
    private int numDynamites;
    
-   
+   private Set<Point> visited;
    private Map<Point, Character> world;
    //We need to keep an eye on what we're standing on because the map thinks we're on a ^
    private char currentTerrain;
@@ -80,6 +80,7 @@ public class Model {
       this.haveTreasure = false;
       this.numDynamites = 0;  
       
+      this.visited = new HashSet<Point>();
       this.world = new HashMap<>();
       this.currentTerrain = ' ';
       
@@ -231,6 +232,7 @@ public class Model {
                   break;
             }
             this.world.put(tile, currTile);
+            visited.add(getLoc());
          }
       }
       //showMap();
@@ -384,8 +386,8 @@ public class Model {
              (tile == WALL && haveDynamite) still thinking about when to use dynamite*/
             );
    }
-   //Returns the nearest reachable point that can reveal any ?. Returns (0,0) (which is always known) if there are no ?'s
-   public Point nearestReachableRevealingTile(Point curr) {
+   //Returns the nearest reachable point that can reveal any ?. null if there are no ?'s
+   /*public Point nearestReachableRevealingTile(Point curr) {
       //Search outwards in squares
       int x = (int) curr.getX();
       int y = (int) curr.getY();
@@ -394,11 +396,13 @@ public class Model {
             for(int y1 = -i; y1 < i; y1++) {
                Point currPoint = new Point(x+x1, y+y1);
                if(world.containsKey(currPoint)) {
-                  if(canSeeUnknowns(currPoint)) {
-                     AStarSearch a = new AStarSearch(this.world, curr, currPoint);
-                     a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
-                     if(a.reachable()) {
-                        return currPoint;
+                  if(world.get(currPoint) != Model.UNEXPLORED) {
+                     if(canSeeUnknowns(currPoint)) {
+                        AStarSearch a = new AStarSearch(this.world, curr, currPoint);
+                        a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+                        if(a.reachable()) {
+                           return currPoint;
+                        }
                      }
                   }
                }
@@ -406,7 +410,20 @@ public class Model {
          }
       }
       return null;
-   }   
+   } */
+   public Point nearestReachableRevealingTile(Point curr) {
+      for(Point p : this.world.keySet()) {
+         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
+            AStarSearch a = new AStarSearch(this.world, curr, p);
+            a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+            if(a.reachable()) {
+               return p;
+            }
+         }
+      }
+      
+      return null;
+   }
    //Same as above but usage for when we are on water and don't want to step off water until exhaustively searched
    public Point nearestReachableRevealingWaterTile(Point curr) {
       //Search outwards in squares
