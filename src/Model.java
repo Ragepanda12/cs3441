@@ -411,7 +411,7 @@ public class Model {
       }
       return null;
    } */
-   public Point nearestReachableRevealingTile(Point curr) {
+ /*  public Point nearestReachableRevealingTile(Point curr) {
       HashMap<Double, Point> distances = new HashMap<>();
       for(Point p : this.world.keySet()) {
          if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
@@ -434,6 +434,18 @@ public class Model {
          }
          return (distances.get(smallest));
       }
+   }*/
+   public Point nearestReachableRevealingTile(Point curr) {
+      for(Point p : this.world.keySet()) {
+         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
+            AStarSearch a = new AStarSearch(this.world, curr, p);
+            a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+            if(a.reachable()) {
+               return p;
+            }
+         }
+      }
+      return null;
    }
    //Same as above but usage for when we are on water and don't want to step off water until exhaustively searched
    public Point nearestReachableRevealingWaterTile(Point curr) {
