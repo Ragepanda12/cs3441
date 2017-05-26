@@ -14,6 +14,12 @@ public class Decider {
    public char make_decision( char view[][] ) {
       this.model.update(view);
       char move = 'r';
+      if(model.getCurrentTerrain() == Model.WATER) {
+         Point toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
+         if(toExplore != null){
+            moveQueue.clear();
+         }            
+      }
       while(moveQueue.isEmpty()) {
       //what do we do?  
          //Priority 1: Have Gold, go back to base position (0,0)
@@ -26,7 +32,7 @@ public class Decider {
          //If we are on water and aren't going back to the start with the gold, we should exhaustively search water before
          //Trying to make a move to anything else to reveal all information
          //Since rafts are limited resource
-         if(model.getWorld().get(model.getLoc()) == Model.WATER) {
+         if(model.getCurrentTerrain() == Model.WATER) {
             Point toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
             if(toExplore != null){
                if(createPathTo(model.getLoc(),toExplore)) {
@@ -38,7 +44,6 @@ public class Decider {
          //I suppose theoretically if we need to use a raft to get there then there must be a tree there
          if(this.model.treasureVisible()) {
             if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
-               System.out.println("HI");
                break;
             }
          }
@@ -59,14 +64,6 @@ public class Decider {
          if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty()))) {
             if(createPathTo(model.getLoc(), model.getKeyLocs().peek())) {
                model.getKeyLocs().poll();
-               break;
-            }
-         }
-         //This one should probably be lower priority because we might have to cut a tree to move forward into an area
-         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
-            if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
-               model.getTreeLocs().poll();
-               moveQueue.add(Model.CHOP_TREE);
                break;
             }
          }
@@ -92,6 +89,14 @@ public class Decider {
                if(createPathTo(model.getLoc(), toExplore)) {
                   break;
                }
+            }
+         }
+         //This one should probably be lower priority because we might have to cut a tree to move forward into an area
+         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
+            if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
+               model.getTreeLocs().poll();
+               moveQueue.add(Model.CHOP_TREE);
+               break;
             }
          }
          //Priority 5: Blow up something with dynamite to open    a new path
@@ -140,8 +145,7 @@ public class Decider {
       int rightTurns = 0;
       //Up = 0, Right = 1, Down = 2, Left = 3.
       //Addition = clockwise rotation, Subtraction = anti-clockwise rotation
-      
-      //
+
       if(nextDirection > currDirection) {
          //If we need to turn clockwise 3 times, just turn counter-clockwise once
          if(nextDirection - currDirection == 3) {

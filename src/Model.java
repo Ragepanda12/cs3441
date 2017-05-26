@@ -55,6 +55,8 @@ public class Model {
    
    
    private Map<Point, Character> world;
+   //We need to keep an eye on what we're standing on because the map thinks we're on a ^
+   private char currentTerrain;
    
    private Point treasureLoc;
    private LinkedList<Point> axes;
@@ -79,6 +81,7 @@ public class Model {
       this.numDynamites = 0;  
       
       this.world = new HashMap<>();
+      this.currentTerrain = ' ';
       
       this.axes = new LinkedList<Point>();
       this.dynamites = new LinkedList<Point>();
@@ -145,6 +148,10 @@ public class Model {
 
    public boolean treasureVisible() {
       return this.treasureVisible;
+   }
+   
+   public char getCurrentTerrain() {
+      return this.currentTerrain;
    }
    
    public void update(char view[][]) {
@@ -244,6 +251,7 @@ public class Model {
    //E.g cut a tree, has raft, or stepped off raft, doesn't have raft anymore.
    public void updateMove(char move) {
       Point currTile = new Point(this.xLoc, this.yLoc);
+      char frontTile = world.get(frontTile(currTile));
       switch(move) {
       //Right turn
          case 'R':
@@ -280,11 +288,10 @@ public class Model {
             }
             break;
          case 'F':
-           char frontTile = world.get(frontTile(currTile));
            if((frontTile == WALL) || (frontTile == DOOR) || (frontTile == TREE)) {
               break;
            }
-           if(((world.get(currTile)) == WATER) && (canMoveOntoTile(frontTile))){
+           if((this.currentTerrain == WATER) && (canMoveOntoTile(frontTile))){
               this.haveRaft = false;
            }
            if (frontTile == AXE) {
@@ -313,8 +320,12 @@ public class Model {
                  xLoc -= 1;
                  break;
            }
+           this.currentTerrain = world.get(getLoc());
          case 'C':
-            this.trees.remove(frontTile(currTile));
+            if(frontTile == TREE) {
+               this.trees.remove(frontTile(currTile));
+               this.haveRaft = true;
+            }
             break;
          case 'U':
             this.doors.remove(frontTile(currTile));
