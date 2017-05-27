@@ -4,6 +4,7 @@ import java.util.*;
 public class Decider {
    private Queue<Character> moveQueue;
    private Model model;
+
    
    public Decider() {
       this.moveQueue = new LinkedList<Character>();
@@ -13,14 +14,38 @@ public class Decider {
    public char make_decision( char view[][] ) {
       this.model.update(view);
       char move = 'r';
+      if(model.getCurrentTerrain() == Model.WATER) {
+         Point toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
+         if(toExplore != null){
+            moveQueue.clear();
+         }            
+      }
       while(moveQueue.isEmpty()) {
       //what do we do?  
-         //Priority 1: Have Gold, go back to base position (0,0)
+    	 /*
+    	 //Priority 0: Win condition
+         if(model.haveTreasure() && model.getLoc() == new Point(0,0)){
+            System.out.println("Mission completed. Game Over");
+            System.exit(0);
+         }*/
+    	  
+    	 //Priority 1: Have Gold, go back to base position (0,0)
          //But we might not be able to be cause we don't have a raft anymore
          if(model.haveTreasure()) {
             if(createPathTo(model.getLoc(), new Point(0,0))) {
                break;
             }
+         }
+         //If we are on water and aren't going back to the start with the gold, we should exhaustively search water before
+         //Trying to make a move to anything else to reveal all information
+         //Since rafts are limited resource
+         if(model.getCurrentTerrain() == Model.WATER) {
+            Point toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
+            if(toExplore != null){
+               if(createPathTo(model.getLoc(),toExplore)) {
+                  break;
+               }
+            }            
          }
          //Priority 2: Can see gold, go to pick it up
          //I suppose theoretically if we need to use a raft to get there then there must be a tree there
@@ -39,7 +64,7 @@ public class Decider {
          //Priority 3: Pick up any tools we can see
          if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty()))) {
             if(createPathTo(model.getLoc(), model.getAxeLocs().peek())) {
-            	model.getAxeLocs().poll();
+               model.getAxeLocs().poll();
                break;
             }
          }
@@ -49,7 +74,6 @@ public class Decider {
                break;
             }
          }
-         
          if(!model.getDynamiteLocs().isEmpty()) {
             if(createPathTo(model.getLoc(), model.getDynamiteLocs().peek())) {
                model.getDynamiteLocs().poll();
@@ -62,28 +86,52 @@ public class Decider {
          Point toExplore = model.nearestReachableRevealingTile(model.getLoc());
          if(toExplore != null){
             if(createPathTo(model.getLoc(),toExplore)) {
-           	   break;
+               break;
             } 
          }
          
          //This one should probably be lower priority because we might have to cut a tree to move forward into an area
          if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
             if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
-            	System.out.println("Found Tree");
+               System.out.println("Found Tree");
                model.getTreeLocs().poll();
                moveQueue.add(Model.CHOP_TREE);
                break;
             }
          }
-         //Priority 5: Blow up something with dynamite to open    a new path
-         if(model.numDynamites() > 0 && model.frontTileIsWall(model.getLoc())){
-            //System.out.println("Front is a wall");
-            moveQueue.add(Model.USE_DYNAMITE);
+         //Priority 4.5 go onto water
+         if(model.haveRaft()) {
+            toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
+            if(toExplore != null) {
+               if(createPathTo(model.getLoc(), toExplore)) {
+                  break;
+               }
+            }
          }
+
+         //Priority 5: Blow up something with dynamite to open    a new path
+         if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty())
+               && !model.getAxeSeenLocs().isEmpty())) {
+            if(createPathTo(model.getLoc(), model.getAxeSeenLocs().peek())) {
+               model.getAxeSeenLocs().poll();
+               break;
+            }
+         }
+         //Look for important items behind wall
+         //Check wall if blowable
+         //Blow up wall
+         //============FIX LOGIC=====================//
+         if(model.numDynamites() > 0 && model.frontTileIsWall(model.getLoc())) {
+            System.out.println("Front is a wall");
+            moveQueue.add(Model.USE_DYNAMITE);
+            break;
+         }
+         
       }
       move = moveQueue.poll();
       this.model.updateMove(move);
       System.out.println(move);
+      model.showMap();
       return move;
    }
 
@@ -122,8 +170,7 @@ public class Decider {
       int rightTurns = 0;
       //Up = 0, Right = 1, Down = 2, Left = 3.
       //Addition = clockwise rotation, Subtraction = anti-clockwise rotation
-      
-      //
+
       if(nextDirection > currDirection) {
          //If we need to turn clockwise 3 times, just turn counter-clockwise once
          if(nextDirection - currDirection == 3) {

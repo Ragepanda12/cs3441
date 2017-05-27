@@ -53,8 +53,10 @@ public class Model {
    private boolean haveTreasure;
    private int numDynamites;
    
-   
+   private Set<Point> visited;
    private Map<Point, Character> world;
+   //We need to keep an eye on what we're standing on because the map thinks we're on a ^
+   private char currentTerrain;
    
    private Point treasureLoc;
    private LinkedList<Point> axes;
@@ -63,6 +65,13 @@ public class Model {
    private LinkedList<Point> trees;
    
    private LinkedList<Point> doors;
+   
+   private LinkedList<Point> axesSeen;
+   private LinkedList<Point> dynamitesSeen;
+   private LinkedList<Point> keysSeen;
+   private LinkedList<Point> treesSeen;
+   private LinkedList<Point> doorsSeen;
+   private Point treasureSeen;
    
    public Model() {
       
@@ -78,12 +87,20 @@ public class Model {
       this.haveTreasure = false;
       this.numDynamites = 0;  
       
+      this.visited = new HashSet<Point>();
       this.world = new HashMap<>();
+      this.currentTerrain = ' ';
       
       this.axes = new LinkedList<Point>();
       this.dynamites = new LinkedList<Point>();
       this.keys = new LinkedList<Point>();
       this.trees = new LinkedList<Point>();
+      
+      this.axesSeen = new LinkedList<Point>();
+      this.dynamitesSeen = new LinkedList<Point>();
+      this.keysSeen = new LinkedList<Point>();
+      this.treesSeen = new LinkedList<Point>();
+      this.doorsSeen = new LinkedList<Point>();
       
       this.doors = new LinkedList<Point>();
       //We might start at the bottom which means that we can go MAXIMUM_Y Upwards...
@@ -138,13 +155,35 @@ public class Model {
    public LinkedList<Point> getDynamiteLocs(){
       return this.dynamites;
    }
-   
    public LinkedList<Point> getDoorLocs(){
       return this.doors;
    }
 
+   public LinkedList<Point> getAxeSeenLocs(){
+      return this.axesSeen;
+   }
+   public LinkedList<Point> getKeySeenLocs(){
+      return this.keysSeen;
+   }
+   public LinkedList<Point> getTreeSeenLocs(){
+      return this.treesSeen;
+   }
+   public LinkedList<Point> getDynamiteSeenLocs(){
+      return this.dynamitesSeen;
+   }
+   public LinkedList<Point> getDoorSeenLocs(){
+      return this.doorsSeen;
+   }
+   public Point getTreasureSeen(){
+      return this.treasureSeen;
+   }
+
    public boolean treasureVisible() {
       return this.treasureVisible;
+   }
+   
+   public char getCurrentTerrain() {
+      return this.currentTerrain;
    }
    
    public void update(char view[][]) {
@@ -191,39 +230,47 @@ public class Model {
                }
             }
             Point tile = new Point(currX, currY);
+            Point curr = new Point(xLoc, yLoc);
             
             switch(currTile) {
                case AXE:
                   if(!this.axes.contains(tile)) {
                      this.axes.add(tile);
+                     this.axesSeen.add(curr);
                   }
                   break;
                case DYNAMITE:
                   if(!this.dynamites.contains(tile)) {
                      this.dynamites.add(tile);
+                     this.dynamitesSeen.add(curr);
                   }
                   break;
                case TREASURE:
                   this.treasureVisible = true;
                   this.treasureLoc = tile;
+                  this.treasureSeen = curr;
                   break;
                case KEY:
                   if(!this.keys.contains(tile)) {
                      this.keys.add(tile);
+                     this.keysSeen.add(curr);
                   }
                   break;
                case TREE:
                   if(!this.trees.contains(tile)) {
                      this.trees.add(tile);
+                     this.treesSeen.add(curr);
                   }
                   break;
                case DOOR:
                   if(!this.doors.contains(tile)) {
                      this.doors.add(tile);
+                     this.doorsSeen.add(curr);
                   }
                   break;
             }
             this.world.put(tile, currTile);
+            visited.add(getLoc());
          }
       }
       //showMap();
@@ -243,7 +290,8 @@ public class Model {
    //Update after the user has input a move...update inventory/change map rep
    //E.g cut a tree, has raft, or stepped off raft, doesn't have raft anymore.
    public void updateMove(char move) {
-      
+      Point currTile = new Point(this.xLoc, this.yLoc);
+      char frontTile = world.get(frontTile(currTile));
       switch(move) {
       //Right turn
          case 'R':
@@ -280,11 +328,10 @@ public class Model {
             }
             break;
          case 'F':
-           char frontTile = world.get(frontTile(new Point(this.xLoc, this.yLoc)));
            if((frontTile == WALL) || (frontTile == DOOR) || (frontTile == TREE)) {
               break;
            }
-           if(((world.get(new Point(this.xLoc, this.yLoc))) == WATER) && (canMoveOntoTile(frontTile))){
+           if((this.currentTerrain == WATER) && (canMoveOntoTile(frontTile))){
               this.haveRaft = false;
            }
            if (frontTile == AXE) {
@@ -313,11 +360,15 @@ public class Model {
                  xLoc -= 1;
                  break;
            }
-           //For these ones, we'll get the updated 'unlocked' or 'cut' or 'blown up' things in the next view anyway
+           this.currentTerrain = world.get(getLoc());
          case 'C':
+            if(frontTile == TREE) {
+               this.trees.remove(frontTile(currTile));
+               this.haveRaft = true;
+            }
             break;
          case 'U':
-            this.doors.remove(frontTile(new Point(xLoc, yLoc)));
+            this.doors.remove(frontTile(currTile));
             break;
          case 'B':
             frontTile = PLAIN;
@@ -325,6 +376,7 @@ public class Model {
             break;
       }
    }
+   //Get the tile in front of us
    public Point frontTile(Point tile) {
       int x = (int) tile.getX();
       int y = (int) tile.getY();
@@ -350,6 +402,7 @@ public class Model {
              (tile == AXE) ||
              (tile == KEY) ||
              (tile == DYNAMITE) ||
+             (tile == TREASURE) ||
              (tile == DIRECTION_UP) ||
              (tile == DIRECTION_LEFT) ||
              (tile == DIRECTION_RIGHT) ||
@@ -361,6 +414,7 @@ public class Model {
              (tile == AXE) ||
              (tile == KEY) ||
              (tile == DYNAMITE) ||
+             (tile == TREASURE) ||
              (tile == DIRECTION_UP) ||
              (tile == DIRECTION_LEFT) ||
              (tile == DIRECTION_RIGHT) ||
@@ -371,8 +425,8 @@ public class Model {
              (tile == WALL && haveDynamite) still thinking about when to use dynamite*/
             );
    }
-   //Returns the nearest reachable point that can reveal any ?. Returns (0,0) (which is always known) if there are no ?'s
-   public Point nearestReachableRevealingTile(Point curr) {
+   //Returns the nearest reachable point that can reveal any ?. null if there are no ?'s
+   /*public Point nearestReachableRevealingTile(Point curr) {
       //Search outwards in squares
       int x = (int) curr.getX();
       int y = (int) curr.getY();
@@ -381,11 +435,74 @@ public class Model {
             for(int y1 = -i; y1 < i; y1++) {
                Point currPoint = new Point(x+x1, y+y1);
                if(world.containsKey(currPoint)) {
-                  if(canSeeUnknowns(currPoint)) {
-                     AStarSearch a = new AStarSearch(this.world, curr, currPoint);
-                     a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
-                     if(a.reachable()) {
-                        return currPoint;
+                  if(world.get(currPoint) != Model.UNEXPLORED) {
+                     if(canSeeUnknowns(currPoint)) {
+                        AStarSearch a = new AStarSearch(this.world, curr, currPoint);
+                        a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+                        if(a.reachable()) {
+                           return currPoint;
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+      return null;
+   } */
+ /*  public Point nearestReachableRevealingTile(Point curr) {
+      HashMap<Double, Point> distances = new HashMap<>();
+      for(Point p : this.world.keySet()) {
+         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
+            AStarSearch a = new AStarSearch(this.world, curr, p);
+            a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+            if(a.reachable()) {
+               distances.put( Math.sqrt( Math.abs((curr.getX() - p.getX())) + Math.abs((curr.getY() - p.getY())) ), p);
+            }
+         }
+      }
+      if(distances.isEmpty()) {
+         return null;
+      }
+      else {
+         Double smallest = 9999999.0;
+         for(Double d : distances.keySet()) {
+            if ( d < smallest) {
+               smallest = d;
+            }
+         }
+         return (distances.get(smallest));
+      }
+   }*/
+   public Point nearestReachableRevealingTile(Point curr) {
+      for(Point p : this.world.keySet()) {
+         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
+            AStarSearch a = new AStarSearch(this.world, curr, p);
+            a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+            if(a.reachable()) {
+               return p;
+            }
+         }
+      }
+      return null;
+   }
+   //Same as above but usage for when we are on water and don't want to step off water until exhaustively searched
+   public Point nearestReachableRevealingWaterTile(Point curr) {
+      //Search outwards in squares
+      int x = (int) curr.getX();
+      int y = (int) curr.getY();
+      for(int i = 1; i < MAXIMUM_X/2; i++) {
+         for(int x1 = -i; x1 < i; x1++) {
+            for(int y1 = -i; y1 < i; y1++) {
+               Point currPoint = new Point(x+x1, y+y1);
+               if(world.containsKey(currPoint)) {
+                  if(world.get(currPoint) == WATER) {
+                     if(canSeeUnknowns(currPoint)) {
+                        AStarSearch a = new AStarSearch(this.world, curr, currPoint);
+                        a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+                        if(a.reachable()) {
+                           return currPoint;
+                        }
                      }
                   }
                }
@@ -396,11 +513,29 @@ public class Model {
    }   
    //Returns whether the front tile is a wall
    public boolean frontTileIsWall(Point curr) {
-	   char frontTile = world.get(frontTile(curr));
-	   if(frontTile == WALL){
-		   return true;
-	   }
-	   return false;
+      char frontTile = world.get(frontTile(curr));
+      if(frontTile == WALL){
+         return true;
+      }
+      return false;
+   }
+   
+   public boolean wallBlocksItem(Point curr) {
+      int x = (int) curr.getX();
+      int y = (int) curr.getY();
+      Point frontCurr = frontTile(curr);
+      char leftFrontTile = world.get(new Point(x - 1, y));
+      char rightFrontTile = world.get(new Point(x + 1, y));
+      char frontFrontTile = world.get(new Point(x, y + 1));
+      if(leftFrontTile == PLAIN || rightFrontTile == PLAIN || 
+            frontFrontTile == PLAIN){
+         return true;
+      }
+      if(leftFrontTile == WALL || rightFrontTile == WALL || 
+            frontFrontTile == WALL){
+         wallBlocksItem(frontCurr);
+      }
+      return false;
    }
    
    private boolean canSeeUnknowns(Point curr) {

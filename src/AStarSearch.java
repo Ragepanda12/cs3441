@@ -14,6 +14,8 @@ public class AStarSearch {
    private Map<Point, Integer> gScore;
    private Map<Point, Point> cameFrom;
 
+   private boolean needToCutTree;
+   
    public AStarSearch(Map<Point,Character> world, Point start, Point goal) {
       this.world = world;
       this.start = start;
@@ -21,6 +23,7 @@ public class AStarSearch {
       this.fScore = new HashMap<Point, Integer>();
       this.gScore = new HashMap<Point, Integer>();
       this.cameFrom = new HashMap<Point, Point>();
+      this.needToCutTree = false;
    }
    private class FComparator implements Comparator<Point>{
       @Override
@@ -72,9 +75,17 @@ public class AStarSearch {
             Point nextTile = new Point(x,y);
             if(visited.contains(nextTile)) {
                continue;
-            }            
-            if (!Model.canPotentiallyMoveOntoTile(world.get(nextTile), haveAxe, haveKey, haveRaft )) {
-               continue;             
+            }
+            //Try to find a path without cutting down a tree first.
+            if(needToCutTree == true) {
+               if (!Model.canPotentiallyMoveOntoTile(world.get(nextTile), haveAxe, haveKey, haveRaft )) {
+                  continue;             
+               }
+            }
+            else {
+               if (!Model.canPotentiallyMoveOntoTile(world.get(nextTile), false, haveKey, haveRaft )) {
+                  continue;             
+               }
             }
             int tentative_gScore = gScore.get(currTile) + 1;
             if (tentative_gScore >= gScore.get(nextTile)) {
@@ -87,6 +98,10 @@ public class AStarSearch {
                pq.add(nextTile);
             }
          }
+      }
+      if(!reachable() && needToCutTree == false) {
+         needToCutTree = true;
+         aStar(haveAxe, haveKey, haveRaft);
       }
    }
    //Call this after calling aStar to get a linked list containing the path from start to goal
