@@ -478,7 +478,7 @@ public class Model {
    public Point nearestReachableRevealingTile(Point curr) {
       HashMap<Integer, Point> distances = new HashMap<>();
       for(Point p : this.world.keySet()) {
-         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft) && canSeeUnknowns(p)) {
+         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft, this.numDynamites) && canSeeUnknowns(p)) {
             AStarSearch a = new AStarSearch(this.world, curr, p);
             a.aStar(this.haveAxe, this.haveKey, this.haveRaft, this.numDynamites);
             if(a.reachable()) {
@@ -506,9 +506,12 @@ public class Model {
       for(Point p : this.world.keySet()) {
          if(!visited.contains(p) && world.get(p) == WATER && canSeeUnknowns(p)) {
             AStarSearch a = new AStarSearch(this.world, curr, p);
-            a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+            a.aStar(this.haveAxe, this.haveKey, this.haveRaft, this.numDynamites);
             if(a.reachable()) {
                distances.put(manhattanDistance(curr, p), p);
+            }
+         }
+      }
       if(distances.isEmpty()){
          return null;
       }
@@ -521,10 +524,6 @@ public class Model {
          }
          return(distances.get(smallest));
       }
-      
-            }
-         }
-z
    }   
    //Returns whether the front tile is a wall
    public boolean frontTileIsWall(Point curr) {
