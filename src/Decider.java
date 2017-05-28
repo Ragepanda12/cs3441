@@ -36,6 +36,16 @@ public class Decider {
                break;
             }
          }
+         
+         //Priority 2: Can see gold, go to pick it up
+         //I suppose theoretically if we need to use a raft to get there then there must be a tree there
+         if(this.model.treasureVisible()) {
+            System.out.println("gold seen at " + model.getLoc());
+            System.out.println(model.getTreasureSeen());
+            if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
+               break;
+            }
+         }
          //If we are on water and aren't going back to the start with the gold, we should exhaustively search water before
          //Trying to make a move to anything else to reveal all information
          //Since rafts are limited resource
@@ -46,13 +56,6 @@ public class Decider {
                   break;
                }
             }            
-         }
-         //Priority 2: Can see gold, go to pick it up
-         //I suppose theoretically if we need to use a raft to get there then there must be a tree there
-         if(this.model.treasureVisible()) {
-            if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
-               break;
-            }
          }
          //Priority 2.5: Unlock doors
          if((model.haveKey()) && (!model.getDoorLocs().isEmpty())) {
@@ -110,28 +113,125 @@ public class Decider {
          }
 
          //Priority 5: Blow up something with dynamite to open    a new path
-         if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty())
+         
+         //Holds logic for using dynamite if the blown wall would lead to important item
+         if(model.numDynamites() > 0 && model.frontTileIsWall(model.getLoc())) {
+            Point frontTile = model.frontTile(model.getLoc());
+            if(model.treasureVisible()) {
+               if(createPathTo(frontTile, model.getTreasureLoc())){
+                  moveQueue.add(Model.USE_DYNAMITE);
+                  break;
+               }
+            }
+            if(!model.getDynamiteLocs().isEmpty()) {
+               if(createPathTo(frontTile, model.getDynamiteLocs().peek())){
+                  model.getDynamiteLocs().poll();
+                  moveQueue.add(Model.USE_DYNAMITE);
+                  break;
+               }
+            } else if(!model.getAxeLocs().isEmpty()) {
+               if(createPathTo(frontTile, model.getAxeLocs().peek())){
+                  model.getAxeLocs().poll();
+                  moveQueue.add(Model.USE_DYNAMITE);
+                  break;
+               }
+            } else if(!model.getKeyLocs().isEmpty()) {
+               if (createPathTo(frontTile, model.getKeyLocs().peek())){
+                  model.getKeyLocs().poll();
+                  moveQueue.add(Model.USE_DYNAMITE);
+                  break;
+               }
+            }
+         }
+         //Holds logic for moving to locations where it saw important items
+         if((!model.getDynamiteLocs().isEmpty())&& !model.getDynamiteSeenLocs().isEmpty()) {
+            if(createPathTo(model.getLoc(), model.getDynamiteSeenLocs().peek())) {
+               model.getDynamiteSeenLocs().poll();
+               break;
+            }
+         }
+         if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty() )
                && !model.getAxeSeenLocs().isEmpty())) {
             if(createPathTo(model.getLoc(), model.getAxeSeenLocs().peek())) {
                model.getAxeSeenLocs().poll();
                break;
             }
          }
+         if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty() )
+               && !model.getKeySeenLocs().isEmpty())) {
+            if(createPathTo(model.getLoc(), model.getKeySeenLocs().peek())) {
+               model.getKeySeenLocs().poll();
+               break;
+            }
+         }
+         if(((model.haveKey()) && (!model.getDoorLocs().isEmpty() )
+               && !model.getDoorSeenLocs().isEmpty())) {
+            if(createPathTo(model.getLoc(), model.getDoorSeenLocs().peek())) {
+               model.getDoorSeenLocs().poll();
+               break;
+            }
+         }
+         if(((model.haveAxe()) && (!model.getTreeLocs().isEmpty() )
+               && !model.getTreeSeenLocs().isEmpty())) {
+            if(createPathTo(model.getLoc(), model.getTreeSeenLocs().peek())) {
+               model.getTreeSeenLocs().poll();
+               break;
+            }
+         }
+         
          //Look for important items behind wall
          //Check wall if blowable
          //Blow up wall
          //============FIX LOGIC=====================//
-         if(model.numDynamites() > 0 && model.frontTileIsWall(model.getLoc())) {
-            System.out.println("Front is a wall");
-            moveQueue.add(Model.USE_DYNAMITE);
-            break;
+         //frontTile might be a Tree that can be blown up
+         /*int i = 1;
+         Point curr = model.getLoc();
+         LinkedList<Point> checked = new LinkedList<Point>();
+         LinkedList<Point> checking = new LinkedList<Point>();
+         checked.add(model.frontTile(curr));
+         checking.add(model.frontTile(curr));
+         while(i < model.numDynamites() && !checking.isEmpty()){
+            //S for counting num of dynamites used?
+            /*
+             * check front node
+             * add nearby nodes to a queue
+             * pop queue
+             
+            Point current = checking.poll();
+            if(createPathTo(current, model.getAxeLocs().peek())){
+               model.getAxeLocs().poll();
+               for(int j = 0; j < i; j++){
+                  moveQueue.add(Model.USE_DYNAMITE);
+                  moveQueue.add(Model.MOVE_FORWARD);
+               }
+               break;
+            }
+            if(model.leftTile(current) != null &&
+                  model.isWall(model.leftTile(current)) &&
+                  checked.contains(model.leftTile(current))){
+               checking.add(model.leftTile(curr));
+            }
+            if(model.rightTile(current) != null && 
+                  model.isWall(model.rightTile(current)) &&
+                  checked.contains(model.rightTile(current))){
+               checking.add(model.rightTile(current));
+            }
+            if(model.frontTile(current) != null && 
+                  model.isWall(model.frontTile(current)) &&
+                  checked.contains(model.frontTile(current))){
+               checking.add(model.frontTile(current));
+            }
+            //need a better way of tracking number of bombs used
+            i++;
          }
+         checked.clear();
+         checking.clear();*/
+         
          
       }
       move = moveQueue.poll();
       this.model.updateMove(move);
       System.out.println(move);
-      model.showMap();
       return move;
    }
 
