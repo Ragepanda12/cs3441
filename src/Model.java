@@ -477,7 +477,7 @@ public class Model {
    public Point nearestReachableRevealingTile(Point curr) {
       HashMap<Integer, Point> distances = new HashMap<>();
       for(Point p : this.world.keySet()) {
-         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
+         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft) && canSeeUnknowns(p)) {
             AStarSearch a = new AStarSearch(this.world, curr, p);
             a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
             if(a.reachable()) {
@@ -502,7 +502,7 @@ public class Model {
    public Point nearestReachableRevealingWaterTile(Point curr) {
       HashMap<Integer, Point> distances = new HashMap<>();
       for(Point p : this.world.keySet()) {
-         if(!visited.contains(p) && world.get(p) == WATER) {
+         if(!visited.contains(p) && world.get(p) == WATER && canSeeUnknowns(p)) {
             AStarSearch a = new AStarSearch(this.world, curr, p);
             a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
             if(a.reachable()) {
