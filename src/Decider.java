@@ -4,7 +4,12 @@ import java.util.*;
 public class Decider {
    private Queue<Character> moveQueue;
    private Model model;
-
+   private boolean needKey = false;
+   private boolean needAxe = false;
+   private boolean needRaft = false;
+   private int numDynamitesNeeded;
+   private int numDynamitesTo;
+   private int numDynamitesFrom;
    
    public Decider() {
       this.moveQueue = new LinkedList<Character>();
@@ -14,37 +19,76 @@ public class Decider {
    public char make_decision( char view[][] ) {
       this.model.update(view);
       char move = 'r';
-      if(model.getCurrentTerrain() == Model.WATER) {
-         Point toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
-         if(toExplore != null){
-            moveQueue.clear();
-         }            
-      }
+      
       while(moveQueue.isEmpty()) {
-      //what do we do?  
-    	 /*
-    	 //Priority 0: Win condition
-         if(model.haveTreasure() && model.getLoc() == new Point(0,0)){
-            System.out.println("Mission completed. Game Over");
-            System.exit(0);
-         }*/
-    	  
-    	 //Priority 1: Have Gold, go back to base position (0,0)
+       //what do we do?
+         //search ground extensively, get dynamite, axe, key
+         //if gold found, get gold and return land
+      //if can reach tree, search water extensively
+      //if gold found, find route back to start
+         //check for walls, doors and water
+            //if walls, check numDynamite = walls
+            //if doors, check haveKey
+            //if water, check route from gold to tree;
+      //Priority 1: Have Gold, go back to base position (0,0)
          //But we might not be able to be cause we don't have a raft anymore
          if(model.haveTreasure()) {
             if(createPathTo(model.getLoc(), new Point(0,0))) {
                break;
             }
          }
-         
+
          //Priority 2: Can see gold, go to pick it up
          //I suppose theoretically if we need to use a raft to get there then there must be a tree there
          if(this.model.treasureVisible()) {
-            System.out.println("gold seen at " + model.getLoc());
-            System.out.println(model.getTreasureSeen());
-            if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
-               break;
+            System.out.println("Curr = " + model.getLoc());
+            checkPathTo(model.getLoc(), model.getTreasureLoc());
+            numDynamitesTo = numDynamitesNeeded;
+            checkPathTo(model.getTreasureLoc(), new Point(0,0));
+            numDynamitesFrom = numDynamitesNeeded;
+            System.out.println("needKey = " + needKey);
+            System.out.println("needAxe = " + needAxe);
+            System.out.println("needRaft = " + needRaft);
+            System.out.println("numDynaTo = " + numDynamitesTo + "numDynaFrom = " + numDynamitesFrom);
+            if(!needKey && !needAxe && !needRaft && model.numDynamites() >= numDynamitesNeeded){
+               if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
+                  break;
+               }
+            } else if(needKey) {
+               if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty() )
+                     && !model.getKeySeenLocs().isEmpty())) {
+                  if(createPathTo(model.getLoc(), model.getKeySeenLocs().peek())) {
+                     model.getKeySeenLocs().poll();
+                     break;
+                  }
+               }
+            } else if(needAxe) {
+               if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty() )
+                     && !model.getAxeSeenLocs().isEmpty())) {
+                  if(createPathTo(model.getLoc(), model.getAxeSeenLocs().peek())) {
+                     model.getAxeSeenLocs().poll();
+                     break;
+                  }
+               }
+            } else if(needRaft) {
+               if(((model.haveAxe()) && (!model.getTreeLocs().isEmpty() )
+                     && !model.getTreeSeenLocs().isEmpty())) {
+                  if(createPathTo(model.getLoc(), model.getTreeSeenLocs().peek())) {
+                     model.getTreeSeenLocs().poll();
+                     break;
+                  }
+               }
+            } else if(model.numDynamites() <= numDynamitesNeeded) {
+               if((!model.getDynamiteLocs().isEmpty())&& !model.getDynamiteSeenLocs().isEmpty()) {
+                  if(createPathTo(model.getLoc(), model.getDynamiteSeenLocs().peek())) {
+                     model.getDynamiteSeenLocs().poll();
+                     break;
+                  }
+               }
             }
+            /*if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
+               break;
+            }*/
          }
          //If we are on water and aren't going back to the start with the gold, we should exhaustively search water before
          //Trying to make a move to anything else to reveal all information
@@ -55,7 +99,7 @@ public class Decider {
                if(createPathTo(model.getLoc(),toExplore)) {
                   break;
                }
-            }            
+            }
          }
          //Priority 2.5: Unlock doors
          if((model.haveKey()) && (!model.getDoorLocs().isEmpty())) {
@@ -90,20 +134,12 @@ public class Decider {
          if(toExplore != null){
             if(createPathTo(model.getLoc(),toExplore)) {
                break;
-            } 
-         }
-         
-         //This one should probably be lower priority because we might have to cut a tree to move forward into an area
-         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
-            if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
-               System.out.println("Found Tree");
-               model.getTreeLocs().poll();
-               moveQueue.add(Model.CHOP_TREE);
-               break;
             }
          }
+
          //Priority 4.5 go onto water
          if(model.haveRaft()) {
+            System.out.println("Have Raft");
             toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
             if(toExplore != null) {
                if(createPathTo(model.getLoc(), toExplore)) {
@@ -112,8 +148,19 @@ public class Decider {
             }
          }
 
+         //This one should probably be lower priority because we might have to cut a tree to move forward into an area
+         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty())
+               && (model.getCurrentTerrain() != Model.WATER))) {
+            if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
+               System.out.println("Found Tree");
+               model.getTreeLocs().poll();
+               moveQueue.add(Model.CHOP_TREE);
+               break;
+            }
+         }
+
          //Priority 5: Blow up something with dynamite to open    a new path
-         
+
          //Holds logic for using dynamite if the blown wall would lead to important item
          if(model.numDynamites() > 0 && model.frontTileIsWall(model.getLoc())) {
             Point frontTile = model.frontTile(model.getLoc());
@@ -143,102 +190,17 @@ public class Decider {
                }
             }
          }
-         //Holds logic for moving to locations where it saw important items
-         if((!model.getDynamiteLocs().isEmpty())&& !model.getDynamiteSeenLocs().isEmpty()) {
-            if(createPathTo(model.getLoc(), model.getDynamiteSeenLocs().peek())) {
-               model.getDynamiteSeenLocs().poll();
-               break;
-            }
-         }
-         if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty() )
-               && !model.getAxeSeenLocs().isEmpty())) {
-            if(createPathTo(model.getLoc(), model.getAxeSeenLocs().peek())) {
-               model.getAxeSeenLocs().poll();
-               break;
-            }
-         }
-         if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty() )
-               && !model.getKeySeenLocs().isEmpty())) {
-            if(createPathTo(model.getLoc(), model.getKeySeenLocs().peek())) {
-               model.getKeySeenLocs().poll();
-               break;
-            }
-         }
-         if(((model.haveKey()) && (!model.getDoorLocs().isEmpty() )
-               && !model.getDoorSeenLocs().isEmpty())) {
-            if(createPathTo(model.getLoc(), model.getDoorSeenLocs().peek())) {
-               model.getDoorSeenLocs().poll();
-               break;
-            }
-         }
-         if(((model.haveAxe()) && (!model.getTreeLocs().isEmpty() )
-               && !model.getTreeSeenLocs().isEmpty())) {
-            if(createPathTo(model.getLoc(), model.getTreeSeenLocs().peek())) {
-               model.getTreeSeenLocs().poll();
-               break;
-            }
-         }
-         
-         //Look for important items behind wall
-         //Check wall if blowable
-         //Blow up wall
-         //============FIX LOGIC=====================//
-         //frontTile might be a Tree that can be blown up
-         /*int i = 1;
-         Point curr = model.getLoc();
-         LinkedList<Point> checked = new LinkedList<Point>();
-         LinkedList<Point> checking = new LinkedList<Point>();
-         checked.add(model.frontTile(curr));
-         checking.add(model.frontTile(curr));
-         while(i < model.numDynamites() && !checking.isEmpty()){
-            //S for counting num of dynamites used?
-            /*
-             * check front node
-             * add nearby nodes to a queue
-             * pop queue
-             
-            Point current = checking.poll();
-            if(createPathTo(current, model.getAxeLocs().peek())){
-               model.getAxeLocs().poll();
-               for(int j = 0; j < i; j++){
-                  moveQueue.add(Model.USE_DYNAMITE);
-                  moveQueue.add(Model.MOVE_FORWARD);
-               }
-               break;
-            }
-            if(model.leftTile(current) != null &&
-                  model.isWall(model.leftTile(current)) &&
-                  checked.contains(model.leftTile(current))){
-               checking.add(model.leftTile(curr));
-            }
-            if(model.rightTile(current) != null && 
-                  model.isWall(model.rightTile(current)) &&
-                  checked.contains(model.rightTile(current))){
-               checking.add(model.rightTile(current));
-            }
-            if(model.frontTile(current) != null && 
-                  model.isWall(model.frontTile(current)) &&
-                  checked.contains(model.frontTile(current))){
-               checking.add(model.frontTile(current));
-            }
-            //need a better way of tracking number of bombs used
-            i++;
-         }
-         checked.clear();
-         checking.clear();*/
-         
-         
       }
       move = moveQueue.poll();
       this.model.updateMove(move);
       System.out.println(move);
+      //model.showMap();
       return move;
    }
-
    
    private boolean createPathTo(Point from, Point to) {
       AStarSearch a = new AStarSearch(model.getWorld(), from, to);
-      a.aStar(model.haveAxe(), model.haveKey(), model.haveRaft());
+      a.aStar(model.haveAxe(), model.haveKey(), model.haveRaft(), model.numDynamites());
       boolean success = false;
       if(a.reachable()) {
          LinkedList<Point> path = a.reconstructPath();
@@ -252,8 +214,13 @@ public class Decider {
             if(model.getWorld().get(path.peek()) == Model.DOOR){
                this.moveQueue.add(Model.UNLOCK_DOOR);
             }
-            else if(model.getWorld().get(path.peek()) == Model.TREE) {
+            else if(model.getWorld().get(path.peek()) == Model.TREE
+                  && model.getWorld().get(curr) != Model.WATER) {
                this.moveQueue.add(Model.CHOP_TREE);
+            }
+            else if(model.getWorld().get(path.peek()) == Model.WALL
+                  && model.numDynamites() > 0) {
+               this.moveQueue.add(Model.USE_DYNAMITE);
             }
             this.moveQueue.add(Model.MOVE_FORWARD);
          }
@@ -261,6 +228,45 @@ public class Decider {
       }
       return success;
    }
+   
+   private void checkPathTo(Point from, Point to) {
+      AStarSearch a = new AStarSearch(model.getWorld(), from, to);
+      a.aStar(true, true, true, 99);   //haveAxe, haveKey, haveRaft all set to true
+      needKey = false;
+      needAxe = false;
+      needRaft = false;
+      numDynamitesNeeded = 0;
+      if(a.reachable()) {
+         LinkedList<Point> pathCheck = a.reconstructPath();
+         pathCheck.addFirst(from);
+         int currDirection = model.getDirection();
+         while(pathCheck.size() > 1) {
+            System.out.println("Route = " + pathCheck);
+            Point curr = pathCheck.poll();
+            int nextDirection = whatDirection(curr, pathCheck.peek());
+            currDirection = nextDirection;
+            if(model.getWorld().get(pathCheck.peek()) == Model.WALL) {
+               numDynamitesNeeded++;
+            }
+            else if(model.getWorld().get(pathCheck.peek()) == Model.DOOR){
+               if(!model.haveKey()){
+                  needKey = true;
+               }
+            }
+            else if(model.getWorld().get(pathCheck.peek()) == Model.TREE) {
+               if(!model.haveAxe()){
+                  needAxe = true;
+               }
+            }
+            else if(model.getWorld().get(pathCheck.peek()) == Model.WATER) {
+               if(!model.haveRaft() || model.getWorld().get(curr) == Model.WATER){
+                  needRaft = true;
+               }
+            }
+         }
+      }
+   }
+   
    private LinkedList<Character> getTurnMoves(int currDirection, int nextDirection){
       LinkedList<Character> turns = new LinkedList<Character>();
       if(currDirection == nextDirection) {

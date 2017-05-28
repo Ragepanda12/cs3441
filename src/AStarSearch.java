@@ -32,7 +32,7 @@ public class AStarSearch {
       }
    }
    
-   public void aStar(boolean haveAxe, boolean haveKey, boolean haveRaft){
+   public void aStar(boolean haveAxe, boolean haveKey, boolean haveRaft, int numDynamites){
       PriorityQueue<Point> pq = new PriorityQueue<Point>(11, new FComparator());
       
       Set<Point> visited = new HashSet<Point>();
@@ -78,13 +78,13 @@ public class AStarSearch {
             }
             //Try to find a path without cutting down a tree first.
             if(needToCutTree == true) {
-               if (!Model.canPotentiallyMoveOntoTile(world.get(nextTile), haveAxe, haveKey, haveRaft )) {
+               if (!Model.canPotentiallyMoveOntoTile(world.get(nextTile), haveAxe, haveKey, haveRaft, numDynamites )) {
                   continue;             
                }
             }
             else {
-               if (!Model.canPotentiallyMoveOntoTile(world.get(nextTile), false, haveKey, haveRaft )) {
-                  continue;             
+               if (!Model.canPotentiallyMoveOntoTile(world.get(nextTile), false, haveKey, haveRaft, numDynamites )) {
+                  continue;
                }
             }
             int tentative_gScore = gScore.get(currTile) + 1;
@@ -101,7 +101,7 @@ public class AStarSearch {
       }
       if(!reachable() && needToCutTree == false) {
          needToCutTree = true;
-         aStar(haveAxe, haveKey, haveRaft);
+         aStar(haveAxe, haveKey, haveRaft, numDynamites);
       }
    }
    //Call this after calling aStar to get a linked list containing the path from start to goal

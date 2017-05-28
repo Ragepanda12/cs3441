@@ -336,15 +336,22 @@ public class Model {
            }
            if (frontTile == AXE) {
               haveAxe = true;
+              //axes.remove(frontTile(currTile));
+              //frontTile = PLAIN;
            }
            else if (frontTile == KEY) {
               haveKey = true;
+              //keys.remove(frontTile(currTile));
+              //frontTile = PLAIN;
            }
            else if (frontTile == DYNAMITE) {
               numDynamites += 1;
+              //dynamites.remove(frontTile(currTile));
+              //frontTile = PLAIN;
            }
            else if (frontTile == TREASURE) {
               haveTreasure = true;
+              //frontTile = PLAIN;
            }
            switch(this.direction) {
               case UP:
@@ -363,12 +370,14 @@ public class Model {
            this.currentTerrain = world.get(getLoc());
          case 'C':
             if(frontTile == TREE) {
-               this.trees.remove(frontTile(currTile));
                this.haveRaft = true;
+               //this.trees.remove(frontTile(currTile));
+               //frontTile = PLAIN;
             }
             break;
          case 'U':
-            this.doors.remove(frontTile(currTile));
+            //frontTile = PLAIN;
+            //this.doors.remove(frontTile(currTile));
             break;
          case 'B':
             frontTile = PLAIN;
@@ -450,7 +459,7 @@ public class Model {
              (tile == DIRECTION_DOWN)
             );
    }
-   public static boolean canPotentiallyMoveOntoTile(char tile, boolean haveAxe, boolean haveKey, boolean haveRaft) {
+   public static boolean canPotentiallyMoveOntoTile(char tile, boolean haveAxe, boolean haveKey, boolean haveRaft, int numDynamites) {
       return((tile == PLAIN) ||
              (tile == AXE) ||
              (tile == KEY) ||
@@ -462,8 +471,8 @@ public class Model {
              (tile == DIRECTION_DOWN) ||
              (tile == TREE && haveAxe) ||
              (tile == WATER && haveRaft) ||
-             (tile == DOOR && haveKey) /*||
-             (tile == WALL && haveDynamite) still thinking about when to use dynamite*/
+             (tile == DOOR && haveKey) ||
+             (tile == WALL && (numDynamites > 0))
             );
    }
    //Returns the nearest reachable point that can reveal any ?. null if there are no ?'s
@@ -491,12 +500,12 @@ public class Model {
       }
       return null;
    } */
- /*  public Point nearestReachableRevealingTile(Point curr) {
+   public Point nearestReachableRevealingTile(Point curr) {
       HashMap<Double, Point> distances = new HashMap<>();
       for(Point p : this.world.keySet()) {
-         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
+         if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft, this.numDynamites)) {
             AStarSearch a = new AStarSearch(this.world, curr, p);
-            a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+            a.aStar(this.haveAxe, this.haveKey, this.haveRaft, this.numDynamites);
             if(a.reachable()) {
                distances.put( Math.sqrt( Math.abs((curr.getX() - p.getX())) + Math.abs((curr.getY() - p.getY())) ), p);
             }
@@ -514,8 +523,8 @@ public class Model {
          }
          return (distances.get(smallest));
       }
-   }*/
-   public Point nearestReachableRevealingTile(Point curr) {
+   }
+/*   public Point nearestReachableRevealingTile(Point curr) {
       for(Point p : this.world.keySet()) {
          if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
             AStarSearch a = new AStarSearch(this.world, curr, p);
@@ -526,7 +535,7 @@ public class Model {
          }
       }
       return null;
-   }
+   }*/
    //Same as above but usage for when we are on water and don't want to step off water until exhaustively searched
    public Point nearestReachableRevealingWaterTile(Point curr) {
       //Search outwards in squares
@@ -540,7 +549,7 @@ public class Model {
                   if(world.get(currPoint) == WATER) {
                      if(canSeeUnknowns(currPoint)) {
                         AStarSearch a = new AStarSearch(this.world, curr, currPoint);
-                        a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+                        a.aStar(this.haveAxe, this.haveKey, this.haveRaft, this.numDynamites);
                         if(a.reachable()) {
                            return currPoint;
                         }
@@ -575,6 +584,10 @@ public class Model {
          return true;
       }
       return false;
+   }
+   
+   public void useRaft(){
+      haveRaft = false;
    }
    
    //Maybe split into 3 different functions for each direction?
