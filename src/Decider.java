@@ -243,7 +243,7 @@ public class Decider {
    
    private boolean createPathTo(Point from, Point to) {
       AStarSearch a = new AStarSearch(model.getWorld(), from, to);
-      a.aStar(model.haveAxe(), model.haveKey(), model.haveRaft(), model.numDynamites());
+      a.aStar(model.haveAxe(), model.haveKey(), model.haveRaft());
       boolean success = false;
       if(a.reachable()) {
          LinkedList<Point> path = a.reconstructPath();
@@ -274,7 +274,7 @@ public class Decider {
    
    private void checkPathTo(Point from, Point to) {
       AStarSearch a = new AStarSearch(model.getWorld(), from, to);
-      a.aStar(true, true, true, 99);   //haveAxe, haveKey, haveRaft all set to true
+      a.aStar(true, true, true);   //haveAxe, haveKey, haveRaft all set to true
       needKey = false;
       needAxe = false;
       needRaft = false;

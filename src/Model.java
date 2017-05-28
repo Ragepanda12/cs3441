@@ -459,7 +459,7 @@ public class Model {
              (tile == DIRECTION_DOWN)
             );
    }
-   public static boolean canPotentiallyMoveOntoTile(char tile, boolean haveAxe, boolean haveKey, boolean haveRaft, int numDynamites) {
+   public static boolean canPotentiallyMoveOntoTile(char tile, boolean haveAxe, boolean haveKey, boolean haveRaft) {
       return((tile == PLAIN) ||
              (tile == AXE) ||
              (tile == KEY) ||
@@ -471,8 +471,8 @@ public class Model {
              (tile == DIRECTION_DOWN) ||
              (tile == TREE && haveAxe) ||
              (tile == WATER && haveRaft) ||
-             (tile == DOOR && haveKey) ||
-             (tile == WALL && (numDynamites > 0))
+             (tile == DOOR && haveKey) //||
+            // (tile == WALL && (numDynamites > 0))
             );
    }
    public Point nearestReachableRevealingTile(Point curr) {
@@ -480,7 +480,7 @@ public class Model {
       for(Point p : this.world.keySet()) {
          if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft) && canSeeUnknowns(p)) {
             AStarSearch a = new AStarSearch(this.world, curr, p);
-            a.aStar(this.haveAxe, this.haveKey, this.haveRaft, this.numDynamites);
+            a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
             if(a.reachable()) {
                distances.put(manhattanDistance(curr, p), p);
             }
@@ -509,6 +509,9 @@ public class Model {
             a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
             if(a.reachable()) {
                distances.put(manhattanDistance(curr, p), p);
+            }
+         }
+      }
       if(distances.isEmpty()){
          return null;
       }
@@ -521,10 +524,6 @@ public class Model {
          }
          return(distances.get(smallest));
       }
-      
-            }
-         }
-z
    }   
    //Returns whether the front tile is a wall
    public boolean frontTileIsWall(Point curr) {
