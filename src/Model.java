@@ -397,47 +397,6 @@ public class Model {
       }
       return new Point(x,y);
    }
-   public Point leftTile(Point tile) {
-      int x = (int) tile.getX();
-      int y = (int) tile.getY();
-      
-      switch(this.direction) {
-         case UP:
-            x -= 1;
-            break;
-         case RIGHT:
-            y += 1;
-            break;
-         case DOWN:
-            x += 1;
-            break;
-         case LEFT:
-            y -= 1;
-            break;
-      }
-      return new Point(x,y);
-   }
-   public Point rightTile(Point tile) {
-      int x = (int) tile.getX();
-      int y = (int) tile.getY();
-      
-      switch(this.direction) {
-         case UP:
-            x += 1;
-            break;
-         case RIGHT:
-            y -= 1;
-            break;
-         case DOWN:
-            x -= 1;
-            break;
-         case LEFT:
-            y += 1;
-            break;
-      }
-      return new Point(x,y);
-   }
-   
    public static boolean canMoveOntoTile(char tile) {
       return((tile == PLAIN) ||
              (tile == AXE) ||
@@ -561,26 +520,10 @@ public class Model {
       return false;
    }
    
-   public boolean isWall(Point curr) {
-      char current = world.get(curr);
-      if(current == WALL){
-         return true;
-      }
-      return false;
-   }
-   
-   public boolean frontTileIsTree(Point curr) {
-      char frontTile = world.get(frontTile(curr));
-      if(frontTile == TREE){
-         return true;
-      }
-      return false;
-   }
-   
-   //Maybe split into 3 different functions for each direction?
-   public boolean surroundFrontTilePassable(Point curr) {
+   public boolean wallBlocksItem(Point curr) {
       int x = (int) curr.getX();
       int y = (int) curr.getY();
+      Point frontCurr = frontTile(curr);
       char leftFrontTile = world.get(new Point(x - 1, y));
       char rightFrontTile = world.get(new Point(x + 1, y));
       char frontFrontTile = world.get(new Point(x, y + 1));
@@ -588,29 +531,9 @@ public class Model {
             frontFrontTile == PLAIN){
          return true;
       }
-      if(haveKey){
-         if(leftFrontTile == DOOR || rightFrontTile == DOOR || 
-               frontFrontTile == DOOR){
-            return true;
-         }
-      }
-      if(haveAxe){
-         if(leftFrontTile == TREE || rightFrontTile == TREE || 
-               frontFrontTile == TREE){
-            return true;
-         }
-      }
-      if(haveRaft){
-         if(leftFrontTile == WATER || rightFrontTile == WATER || 
-               frontFrontTile == WATER){
-            return true;
-         }
-      }
-      if(numDynamites > 0){
-         if(leftFrontTile == WALL || rightFrontTile == WALL || 
-               frontFrontTile == WALL){
-            return true;
-         }
+      if(leftFrontTile == WALL || rightFrontTile == WALL || 
+            frontFrontTile == WALL){
+         wallBlocksItem(frontCurr);
       }
       return false;
    }
