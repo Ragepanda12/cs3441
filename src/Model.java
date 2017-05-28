@@ -475,41 +475,53 @@ public class Model {
       }
    }*/
    public Point nearestReachableRevealingTile(Point curr) {
+      HashMap<Integer, Point> distances = new HashMap<>();
       for(Point p : this.world.keySet()) {
          if(!visited.contains(p) && world.get(p) != UNEXPLORED && canPotentiallyMoveOntoTile(world.get(p), this.haveAxe, this.haveKey, this.haveRaft)) {
             AStarSearch a = new AStarSearch(this.world, curr, p);
             a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
             if(a.reachable()) {
-               return p;
+               distances.put(manhattanDistance(curr, p), p);
             }
          }
       }
-      return null;
+      if(distances.isEmpty()){
+         return null;
+      }
+      else {
+         int smallest = 9999999;
+         for(Integer i : distances.keySet()) {
+            if(i < smallest) {
+               smallest = i;
+            }
+         }
+         return(distances.get(smallest));
+      }
    }
    //Same as above but usage for when we are on water and don't want to step off water until exhaustively searched
    public Point nearestReachableRevealingWaterTile(Point curr) {
-      //Search outwards in squares
-      int x = (int) curr.getX();
-      int y = (int) curr.getY();
-      for(int i = 1; i < MAXIMUM_X/2; i++) {
-         for(int x1 = -i; x1 < i; x1++) {
-            for(int y1 = -i; y1 < i; y1++) {
-               Point currPoint = new Point(x+x1, y+y1);
-               if(world.containsKey(currPoint)) {
-                  if(world.get(currPoint) == WATER) {
-                     if(canSeeUnknowns(currPoint)) {
-                        AStarSearch a = new AStarSearch(this.world, curr, currPoint);
-                        a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
-                        if(a.reachable()) {
-                           return currPoint;
-                        }
-                     }
-                  }
-               }
+      HashMap<Integer, Point> distances = new HashMap<>();
+      for(Point p : this.world.keySet()) {
+         if(!visited.contains(p) && world.get(p) == WATER) {
+            AStarSearch a = new AStarSearch(this.world, curr, p);
+            a.aStar(this.haveAxe, this.haveKey, this.haveRaft);
+            if(a.reachable()) {
+               distances.put(manhattanDistance(curr, p), p);
             }
          }
       }
-      return null;
+      if(distances.isEmpty()){
+         return null;
+      }
+      else {
+         int smallest = 9999999;
+         for(Integer i : distances.keySet()) {
+            if(i < smallest) {
+               smallest = i;
+            }
+         }
+         return(distances.get(smallest));
+      }
    }   
    //Returns whether the front tile is a wall
    public boolean frontTileIsWall(Point curr) {
@@ -566,4 +578,8 @@ public class Model {
          System.out.println();
       }
    }
+   private int manhattanDistance(Point start, Point goal) {
+      return Math.abs((int)start.getX() - (int)goal.getX()) + Math.abs((int)start.getY() - (int)goal.getY());
+   }
 }
+
