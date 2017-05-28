@@ -10,6 +10,8 @@ public class Decider {
    private int numDynamitesNeeded;
    private int numDynamitesTo;
    private int numDynamitesFrom;
+
+   private boolean searchingWater;
    
    public Decider() {
       this.moveQueue = new LinkedList<Character>();
@@ -33,6 +35,7 @@ public class Decider {
       //Priority 1: Have Gold, go back to base position (0,0)
          //But we might not be able to be cause we don't have a raft anymore
          if(model.haveTreasure()) {
+            System.out.println("Prio 1");
             if(createPathTo(model.getLoc(), new Point(0,0))) {
                break;
             }
@@ -94,15 +97,27 @@ public class Decider {
          //Trying to make a move to anything else to reveal all information
          //Since rafts are limited resource
          if(model.getCurrentTerrain() == Model.WATER) {
+            System.out.println("Prio 3");
             Point toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
+            System.out.println("Coming from: " + model.getLoc());
+            System.out.println("Going to: " + toExplore);
             if(toExplore != null){
                if(createPathTo(model.getLoc(),toExplore)) {
                   break;
                }
+            }            
+         }
+         //Priority 2: Can see gold, go to pick it up
+         //I suppose theoretically if we need to use a raft to get there then there must be a tree there
+         if(this.model.treasureVisible()) {
+            System.out.println("Prio 2");
+            if(createPathTo(model.getLoc(), model.getTreasureLoc())) {
+               break;
             }
          }
          //Priority 2.5: Unlock doors
          if((model.haveKey()) && (!model.getDoorLocs().isEmpty())) {
+            System.out.println("Prio 4");
             if(createPathTo(model.getLoc(), model.getDoorLocs().peek())) {
                model.getDoorLocs().poll();
                break;
@@ -110,18 +125,21 @@ public class Decider {
          }
          //Priority 3: Pick up any tools we can see
          if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty()))) {
+            System.out.println("Prio 5");
             if(createPathTo(model.getLoc(), model.getAxeLocs().peek())) {
                model.getAxeLocs().poll();
                break;
             }
          }
          if(((!model.haveKey()) && (!model.getKeyLocs().isEmpty()))) {
+            System.out.println("Prio 6");
             if(createPathTo(model.getLoc(), model.getKeyLocs().peek())) {
                model.getKeyLocs().poll();
                break;
             }
          }
          if(!model.getDynamiteLocs().isEmpty()) {
+            System.out.println("Prio 7");
             if(createPathTo(model.getLoc(), model.getDynamiteLocs().peek())) {
                model.getDynamiteLocs().poll();
                break;
@@ -132,7 +150,19 @@ public class Decider {
          //If null is returned then there is no new info we can find
          Point toExplore = model.nearestReachableRevealingTile(model.getLoc());
          if(toExplore != null){
+            System.out.println("Prio 8");
             if(createPathTo(model.getLoc(),toExplore)) {
+               break;
+            } 
+         }
+         
+         //This one should probably be lower priority because we might have to cut a tree to move forward into an area
+         if(((!model.haveRaft()) && (!model.getTreeLocs().isEmpty()))) {
+            System.out.println("Prio 9");
+            if(createPathTo(model.getLoc(), model.getTreeLocs().peek())) {
+               System.out.println("Found Tree");
+               model.getTreeLocs().poll();
+               moveQueue.add(Model.CHOP_TREE);
                break;
             }
          }
@@ -140,6 +170,7 @@ public class Decider {
          //Priority 4.5 go onto water
          if(model.haveRaft()) {
             System.out.println("Have Raft");
+            System.out.println("Prio 10");
             toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
             if(toExplore != null) {
                if(createPathTo(model.getLoc(), toExplore)) {
@@ -155,6 +186,12 @@ public class Decider {
                System.out.println("Found Tree");
                model.getTreeLocs().poll();
                moveQueue.add(Model.CHOP_TREE);
+         //Priority 5: Blow up something with dynamite to open    a new path
+         if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty())
+               && !model.getAxeSeenLocs().isEmpty())) {
+            System.out.println("Prio 11");
+            if(createPathTo(model.getLoc(), model.getAxeSeenLocs().peek())) {
+               model.getAxeSeenLocs().poll();
                break;
             }
          }
@@ -189,12 +226,18 @@ public class Decider {
                   break;
                }
             }
+            System.out.println("Prio 12");
+            System.out.println("Front is a wall");
+            moveQueue.add(Model.USE_DYNAMITE);
+            break;
          }
       }
       move = moveQueue.poll();
       this.model.updateMove(move);
       System.out.println(move);
       //model.showMap();
+         }
+      }
       return move;
    }
    

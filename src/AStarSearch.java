@@ -55,6 +55,7 @@ public class AStarSearch {
             return;
          }
          visited.add(currTile);
+
          for (int i = 0; i < 4; i++) {
             int x = (int)currTile.getX();
             int y = (int)currTile.getY();
@@ -74,6 +75,9 @@ public class AStarSearch {
             }
             Point nextTile = new Point(x,y);
             if(visited.contains(nextTile)) {
+               continue;
+            }
+            if(this.world.get(this.start) == Model.WATER && this.world.get(this.goal) == Model.WATER && this.world.get(nextTile) != Model.WATER) {
                continue;
             }
             //Try to find a path without cutting down a tree first.
