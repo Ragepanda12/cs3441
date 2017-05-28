@@ -14,12 +14,7 @@ public class Decider {
    public char make_decision( char view[][] ) {
       this.model.update(view);
       char move = 'r';
-      if(model.getCurrentTerrain() == Model.WATER) {
-         Point toExplore = model.nearestReachableRevealingWaterTile(model.getLoc());
-         if(toExplore != null){
-            moveQueue.clear();
-         }            
-      }
+      
       while(moveQueue.isEmpty()) {
       //what do we do?  
     	 /*
