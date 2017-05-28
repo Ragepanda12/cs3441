@@ -336,22 +336,22 @@ public class Model {
            }
            if (frontTile == AXE) {
               haveAxe = true;
-              //axes.remove(frontTile(currTile));
-              //frontTile = PLAIN;
+              axes.remove(frontTile(currTile));
+              this.world.put(currTile, PLAIN);
            }
            else if (frontTile == KEY) {
               haveKey = true;
-              //keys.remove(frontTile(currTile));
-              //frontTile = PLAIN;
+              keys.remove(frontTile(currTile));
+              this.world.put(currTile, PLAIN);
            }
            else if (frontTile == DYNAMITE) {
               numDynamites += 1;
-              //dynamites.remove(frontTile(currTile));
-              //frontTile = PLAIN;
+              dynamites.remove(frontTile(currTile));
+              this.world.put(currTile, PLAIN);
            }
            else if (frontTile == TREASURE) {
               haveTreasure = true;
-              //frontTile = PLAIN;
+              this.world.put(currTile, PLAIN);
            }
            switch(this.direction) {
               case UP:
@@ -371,16 +371,16 @@ public class Model {
          case 'C':
             if(frontTile == TREE) {
                this.haveRaft = true;
-               //this.trees.remove(frontTile(currTile));
-               //frontTile = PLAIN;
+               this.trees.remove(frontTile(currTile));
+               this.world.put(currTile, PLAIN);
             }
             break;
          case 'U':
-            //frontTile = PLAIN;
-            //this.doors.remove(frontTile(currTile));
+            this.world.put(currTile, PLAIN);
+            this.doors.remove(frontTile(currTile));
             break;
          case 'B':
-            frontTile = PLAIN;
+            this.world.put(currTile, PLAIN);
             numDynamites -= 1;
             break;
       }

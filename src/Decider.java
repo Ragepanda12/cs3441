@@ -186,6 +186,8 @@ public class Decider {
                System.out.println("Found Tree");
                model.getTreeLocs().poll();
                moveQueue.add(Model.CHOP_TREE);
+            }
+         }
          //Priority 5: Blow up something with dynamite to open    a new path
          if(((!model.haveAxe()) && (!model.getAxeLocs().isEmpty())
                && !model.getAxeSeenLocs().isEmpty())) {
@@ -207,40 +209,37 @@ public class Decider {
                   break;
                }
             }
-            if(!model.getDynamiteLocs().isEmpty()) {
-               if(createPathTo(frontTile, model.getDynamiteLocs().peek())){
-                  model.getDynamiteLocs().poll();
-                  moveQueue.add(Model.USE_DYNAMITE);
-                  break;
-               }
-            } else if(!model.getAxeLocs().isEmpty()) {
-               if(createPathTo(frontTile, model.getAxeLocs().peek())){
-                  model.getAxeLocs().poll();
-                  moveQueue.add(Model.USE_DYNAMITE);
-                  break;
-               }
-            } else if(!model.getKeyLocs().isEmpty()) {
-               if (createPathTo(frontTile, model.getKeyLocs().peek())){
-                  model.getKeyLocs().poll();
-                  moveQueue.add(Model.USE_DYNAMITE);
-                  break;
-               }
+         if(!model.getDynamiteLocs().isEmpty()) {
+            if(createPathTo(frontTile, model.getDynamiteLocs().peek())){
+               model.getDynamiteLocs().poll();
+               moveQueue.add(Model.USE_DYNAMITE);
+               break;
             }
-            System.out.println("Prio 12");
-            System.out.println("Front is a wall");
-            moveQueue.add(Model.USE_DYNAMITE);
-            break;
+         } else if(!model.getAxeLocs().isEmpty()) {
+            if(createPathTo(frontTile, model.getAxeLocs().peek())){
+               model.getAxeLocs().poll();
+               moveQueue.add(Model.USE_DYNAMITE);
+               break;
+            }
+         } else if(!model.getKeyLocs().isEmpty()) {
+            if (createPathTo(frontTile, model.getKeyLocs().peek())){
+               model.getKeyLocs().poll();
+               moveQueue.add(Model.USE_DYNAMITE);
+               break;
+            }
+         }
+         System.out.println("Prio 12");
+         System.out.println("Front is a wall");
+         moveQueue.add(Model.USE_DYNAMITE);
+         break;
          }
       }
       move = moveQueue.poll();
       this.model.updateMove(move);
       System.out.println(move);
       //model.showMap();
-         }
-      }
       return move;
-   }
-   
+   }   
    private boolean createPathTo(Point from, Point to) {
       AStarSearch a = new AStarSearch(model.getWorld(), from, to);
       a.aStar(model.haveAxe(), model.haveKey(), model.haveRaft());
